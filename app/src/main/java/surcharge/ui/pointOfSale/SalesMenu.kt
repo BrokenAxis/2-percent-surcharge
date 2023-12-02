@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -121,6 +122,16 @@ fun SalesMenu(
                     Icon(
                         Icons.Filled.Search,
                         contentDescription = "Artist",
+                    )
+                }
+                IconButton(onClick = {
+                    sale = Sale()
+                    scope.launch { snackbarHostState.showSnackbar("Cart Deleted!") }
+                }
+                ) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = "Delete Cart",
                     )
                 }
             }, floatingActionButton = {

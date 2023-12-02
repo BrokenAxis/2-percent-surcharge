@@ -79,7 +79,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // cloudinary images
-    implementation("com.cloudinary:kotlin-url-gen:1.7.0")
+    implementation("com.cloudinary:cloudinary-android:2.5.0")
 
     // env
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")

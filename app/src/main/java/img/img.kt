@@ -1,6 +1,7 @@
 package img
 
-import com.cloudinary.Cloudinary
+import android.net.Uri
+import com.cloudinary.android.MediaManager
 import io.github.cdimascio.dotenv.dotenv
 
 private val dotenv = dotenv{
@@ -8,10 +9,11 @@ private val dotenv = dotenv{
     filename = "env" // instead of '.env', use 'env'
 }
 
-private val cloudinary = Cloudinary(dotenv["CLOUDINARY_URL"])
 interface img {
-    fun upload(image: String, artist: String, id: Number): String {
-        val options = mapOf("public_id" to "$artist/$id",)
-        return ""
+    fun upload(image: Uri, artist: String, name: String): String {
+        return MediaManager.get().upload(image)
+            .unsigned("print")
+            .option("public_id", "$artist/$name")
+            .dispatch()
     }
 }

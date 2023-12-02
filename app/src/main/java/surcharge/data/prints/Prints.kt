@@ -9,4 +9,5 @@ interface Prints {
     suspend fun getPrints(): Result<List<Print>>
     suspend fun getPrints(artist: Artist): Result<List<Print>>
     suspend fun getBundles(): Result<List<Bundle>>
+    suspend fun getArtists(): Result<List<Artist>>
 }

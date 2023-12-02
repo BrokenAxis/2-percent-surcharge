@@ -19,4 +19,8 @@ class PrintsImpl: Prints {
     override suspend fun getBundles(): Result<List<Bundle>> {
         return Result.success(bundles)
     }
+
+    override suspend fun getArtists(): Result<List<Artist>> {
+        return Result.success(artists)
+    }
 }

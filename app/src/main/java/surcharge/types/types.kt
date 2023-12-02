@@ -8,12 +8,12 @@ data class Artist(
 )
 
 data class Print(
-    val name: String = "",
-    val property: String = "",
+    var name: String = "",
+    var property: String = "",
     val url: String = "",
-    val sizes: List<Size> = listOf(),
-    var stock: Map<Size, Int> = mapOf(),
-    var price: Map<Size, Int> = mapOf(),
+    var sizes: List<Size> = listOf(),
+    var stock: MutableMap<Size, Int> = mutableMapOf(),
+    var price: MutableMap<Size, Int> = mutableMapOf(),
     val artist: Artist = Artist()
 )
 
