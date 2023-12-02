@@ -8,13 +8,13 @@ data class Artist(
 )
 
 data class Print(
-    val name: String = "",
-    val property: String = "",
-    val url: String = "",
-    val sizes: List<Size> = listOf(),
-    var stock: Map<Size, Int> = mapOf(),
-    var price: Map<Size, Int> = mapOf(),
-    val artist: Artist = Artist()
+    var name: String = "",
+    var property: String = "",
+    var url: String = "",
+    var sizes: List<Size> = listOf(),
+    var stock: MutableMap<Size, Int> = mutableMapOf(),
+    var price: MutableMap<Size, Int> = mutableMapOf(),
+    var artist: Artist = Artist()
 )
 
 interface Item {
@@ -24,13 +24,13 @@ interface Item {
 }
 
 data class PrintItem(
-    override val name: String,
-    val property: String,
-    val url: String,
-    val size: Size,
-    override var quantity: Int,
-    override var price: Int,
-    val artist: Artist
+    override val name: String = "",
+    val property: String = "",
+    val url: String = "",
+    val size: Size = Size.A5,
+    override var quantity: Int = 0,
+    override var price: Int = 0,
+    val artist: Artist = Artist()
 ) : Item
 
 fun createPrintItem(print: Print, size: Size, quantity: Int = 1, price: Int? = null): PrintItem {
@@ -53,8 +53,8 @@ enum class Size {
 }
 
 data class Bundle(
-    val name: String = "",
-    val prints: List<PrintItem> = listOf(),
+    var name: String = "",
+    var prints: List<PrintItem> = listOf(),
     var price: Int = 0
 )
 

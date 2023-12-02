@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -33,6 +34,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,20 +47,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
-import surcharge.data.prints.Prints
-import surcharge.data.prints.PrintsImpl
+import surcharge.data.prints.Data
+import surcharge.data.prints.DataImpl
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Sale
 import surcharge.types.Size
 import surcharge.types.createBundleItem
 import surcharge.types.createPrintItem
-import surcharge.ui.PrintLayout
+import surcharge.utils.gallery.TabGallery
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SalesMenu(
-    prints: Prints = PrintsImpl(), onBack: () -> Unit = {}
+    data: Data = DataImpl(), onBack: () -> Unit = {}
 ) {
     var openCartDialog by remember { mutableStateOf(false) }
     var openPrintDialog by remember { mutableStateOf(false) }
@@ -66,7 +70,7 @@ fun SalesMenu(
     var bundleClicked by remember { mutableStateOf(false) }
     var bundle by remember { mutableStateOf(Bundle()) }
     var sale by remember { mutableStateOf(Sale()) }
-    var checkoutComplete by remember { mutableStateOf(false) }
+    var refresh by remember { mutableIntStateOf(0) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -77,17 +81,12 @@ fun SalesMenu(
             DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Cart({ openCartDialog = false }, {
-                checkoutComplete = true
+                sale.time = Instant.now()
+                scope.launch{ data.addSale(sale) }
                 scope.launch { snackbarHostState.showSnackbar("Transaction Completed!") }
+                openCartDialog = false
             }, sale)
         }
-    }
-
-    if (checkoutComplete) {
-        // TODO update sales data
-        sale = Sale()
-        checkoutComplete = false
-        openCartDialog = false
     }
 
     Scaffold(
@@ -123,6 +122,16 @@ fun SalesMenu(
                         contentDescription = "Artist",
                     )
                 }
+                IconButton(onClick = {
+                    sale = Sale()
+                    scope.launch { snackbarHostState.showSnackbar("Cart Deleted!") }
+                }
+                ) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = "Delete Cart",
+                    )
+                }
             }, floatingActionButton = {
                 FloatingActionButton(onClick = { openCartDialog = true }) {
                     Icon(Icons.Filled.ShoppingCart, "Cart")
@@ -131,22 +140,25 @@ fun SalesMenu(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        PrintLayout(
-            data = prints,
-            printOnClick = {
-                openPrintDialog = true
-                print = it
-            },
-            bundleOnClick = {
-                bundleClicked = true
-                bundle = it
-            },
-            bundleOnLongPress = {
-                openBundleDialog = true
-                bundle = it
-            },
-            innerPadding = innerPadding
-        )
+        key(refresh) {
+            TabGallery(
+                data = data,
+                printOnClick = {
+                    openPrintDialog = true
+                    print = it
+                },
+                bundleOnClick = {
+                    bundleClicked = true
+                    bundle = it
+                },
+                bundleOnLongPress = {
+                    openBundleDialog = true
+                    bundle = it
+                },
+                innerPadding = innerPadding
+            )
+        }
+
 
         if (openPrintDialog) {
             BasicAlertDialog(onDismissRequest = { openPrintDialog = false }) {
@@ -200,7 +212,7 @@ fun SalesMenu(
         if (bundleClicked) {
             val bundleIndex = sale.items.indexOfFirst { it.name == bundle.name }
             if (bundleIndex != -1) {
-                sale.items[bundleIndex].quantity += 1
+                sale.items[bundleIndex].quantity++
             } else {
                 sale.items.add(createBundleItem(bundle))
             }

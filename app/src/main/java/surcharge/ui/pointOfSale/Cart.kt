@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.ShoppingCartCheckout
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -27,6 +26,8 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -88,45 +89,54 @@ fun Cart(
         }
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
 
-        var total = 0
-        sale.items.forEach {
-            val itemTotal = it.price * it.quantity
-            total += itemTotal
+        var total by remember { mutableIntStateOf(sale.items.sumOf { it.price * it.quantity }) }
 
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            ) {
-                Icon(
-                    Icons.Filled.DragHandle,
-                    "drag",
-                    Modifier,
-                    MaterialTheme.colorScheme.onSurfaceVariant
+        key(total) {
+            sale.items.forEach { item ->
+                val itemTotal = item.price * item.quantity
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                ) {
+                    IconButton(onClick = {
+                        sale.items.remove(item)
+                        total = sale.items.sumOf { it.price * it.quantity }
+                    }) {
+                        Icon(
+                            Icons.Filled.Close,
+                            "Delete",
+                            Modifier,
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Text(
+                        text = "${item.quantity}x ${item.name}${
+                            when (item is PrintItem) {
+                                true -> " - ${item.size}"
+                                else -> ""
+                            }
+                        }",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(10.dp),
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        "$ ${formatPrice(itemTotal)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp)
                 )
-                Text(
-                    text = "${it.quantity}x ${it.name}${
-                        when (it is PrintItem) {
-                            true -> " - ${it.size}"
-                            else -> ""
-                        }
-                    }",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(10.dp),
-                )
-                Spacer(Modifier.weight(1f))
-                Text(
-                    "$ ${formatPrice(itemTotal)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
+
             }
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-
         }
+
 
         Spacer(Modifier.weight(1f))
 
@@ -136,10 +146,12 @@ fun Cart(
             options.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    onClick = { selectedIndex = when (index) {
-                        0 -> PaymentType.CASH
-                        else -> PaymentType.CARD
-                    } },
+                    onClick = {
+                        selectedIndex = when (index) {
+                            0 -> PaymentType.CASH
+                            else -> PaymentType.CARD
+                        }
+                    },
                     selected = index == selectedIndex.ordinal
                 ) {
                     Text(label)

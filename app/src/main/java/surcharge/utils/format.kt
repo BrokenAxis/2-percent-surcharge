@@ -1,6 +1,10 @@
 package surcharge.utils
 
 import androidx.core.text.isDigitsOnly
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
 
 fun formatPrice(price: Int): String {
     return when (price % 100) {
@@ -20,4 +24,11 @@ fun validatePrice(price: String): Boolean {
             && price[price.length - 3] == '.'
             && price.substringAfter('.').isDigitsOnly()
             && price.substringBefore('.').isDigitsOnly()
+}
+
+fun formatTime(timestamp: Instant): String {
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm a")
+        .withZone(ZoneId.systemDefault())
+
+    return formatter.format(timestamp)
 }

@@ -10,6 +10,7 @@ import surcharge.data.AppContainer
 import surcharge.ui.home.HomeScreen
 import surcharge.ui.manage.EditMenu
 import surcharge.ui.pointOfSale.SalesMenu
+import surcharge.ui.review.ReviewScreen
 
 @Composable
 fun SurchargeNavGraph(
@@ -38,7 +39,7 @@ fun SurchargeNavGraph(
             route = SurchargeDestinations.MANAGE_SHOP_ROUTE
         ) {
             EditMenu(
-                appContainer.prints,
+                appContainer.data,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -46,13 +47,17 @@ fun SurchargeNavGraph(
             route = SurchargeDestinations.SHOP_ROUTE
         ) {
             SalesMenu(
+                appContainer.data,
                 onBack = { navController.popBackStack() }
             )
         }
         composable(
             route = SurchargeDestinations.SALES_ROUTE
         ) {
-            TODO()
+            ReviewScreen(
+                appContainer.data,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

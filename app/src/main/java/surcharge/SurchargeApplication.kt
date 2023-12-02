@@ -1,6 +1,7 @@
 package surcharge
 
 import android.app.Application
+import com.cloudinary.android.MediaManager
 import surcharge.data.AppContainer
 import surcharge.data.AppContainerImpl
 
@@ -14,6 +15,7 @@ class SurchargeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        MediaManager.init(this)
         container = AppContainerImpl(this)
     }
 }

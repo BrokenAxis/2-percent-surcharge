@@ -1,15 +1,15 @@
 package surcharge.data
 
 import android.content.Context
-import surcharge.data.prints.Prints
-import surcharge.data.prints.PrintsImpl
+import surcharge.data.prints.Data
+import surcharge.data.prints.DataImpl
 
 interface AppContainer {
-    val prints: Prints
+    val data: Data
 }
 
 class AppContainerImpl(private val applicationContext: Context): AppContainer {
-    override val prints: Prints by lazy {
-        PrintsImpl()
+    override val data: Data by lazy {
+        DataImpl()
     }
 }

@@ -16,16 +16,79 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Search
-import surcharge.data.prints.Prints
-import surcharge.data.prints.PrintsImpl
-import surcharge.ui.PrintLayout
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.launch
+import surcharge.data.prints.Data
+import surcharge.data.prints.DataImpl
+import surcharge.types.Bundle
+import surcharge.types.Print
+import surcharge.utils.gallery.TabGallery
+import surcharge.utils.gallery.Tab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditMenu(
-    prints: Prints = PrintsImpl(),
+    data: Data = DataImpl(),
     onBack: () -> Unit = {}
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var refresh by remember { mutableIntStateOf(0) }
+    var tab by remember { mutableStateOf(Tab.Print) }
+
+    var openAddPrintDialog by remember { mutableStateOf(false) }
+    val print by remember { mutableStateOf(Print()) }
+    if (openAddPrintDialog) {
+        Dialog(
+            onDismissRequest = { openAddPrintDialog = false },
+            DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AddPrint(
+                { openAddPrintDialog = false },
+                {
+                    openAddPrintDialog = false
+                    scope.launch { data.addPrint(print) }
+                    scope.launch { snackbarHostState.showSnackbar("Print Added!") }
+                    refresh++
+                },
+                data,
+                print
+            )
+        }
+    }
+
+    var openAddBundleDialog by remember { mutableStateOf(false) }
+    val bundle by remember { mutableStateOf(Bundle()) }
+    if (openAddBundleDialog) {
+        Dialog(
+            onDismissRequest = { openAddBundleDialog = false },
+            DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AddBundle(
+                { openAddBundleDialog = false },
+                {
+                    refresh++
+                    openAddBundleDialog = false
+                    scope.launch { data.addBundle(bundle) }
+                    scope.launch { snackbarHostState.showSnackbar("Bundle Added!") }
+                },
+                data,
+                bundle
+            )
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,20 +126,37 @@ fun EditMenu(
                 },
                 floatingActionButton = {
                     ExtendedFloatingActionButton(
-                        onClick = { /* do something */ },
+                        onClick = {
+                            when (tab) {
+                                Tab.Print -> openAddPrintDialog = true
+                                Tab.Bundle -> openAddBundleDialog = true
+                            }
+                        },
                     ) {
                         Icon(Icons.Filled.Add, "Add Print")
-                        Text(text = "Add Print")
+                        Text(
+                            text = when (tab) {
+                                Tab.Print -> "Add Print"
+                                Tab.Bundle -> "Add Bundle"
+                            }
+                        )
                     }
                 }
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        PrintLayout(prints, innerPadding = innerPadding)
+        key(refresh) {
+            TabGallery(
+                data,
+                onSwitchTab = {
+                    tab = it
+                },
+                innerPadding = innerPadding
+            )
+        }
     }
 }
-
-
 
 
 @Preview(showBackground = true)
