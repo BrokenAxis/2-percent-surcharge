@@ -40,6 +40,10 @@ import surcharge.types.Print
 @Composable
 fun PrintLayout(
     data: Prints = PrintsImpl(),
+    printOnClick: (print: Print) -> Unit = {},
+    printOnLongPress: (print: Print) -> Unit = {},
+    bundleOnClick: (bundle: Bundle) -> Unit = {},
+    bundleOnLongPress: (bundle: Bundle) -> Unit = {},
     innerPadding: PaddingValues
 ) {
     var state by remember { mutableIntStateOf(0) }
@@ -61,43 +65,43 @@ fun PrintLayout(
             }
         }
 
-        val prints = remember { mutableStateOf(listOf<Print>()) }
-        val bundles = remember { mutableStateOf(listOf<Bundle>()) }
+        var prints by remember { mutableStateOf(listOf<Print>()) }
+        var bundles by remember { mutableStateOf(listOf<Bundle>()) }
 
         LaunchedEffect(true) {
-            prints.value = data.getPrints().getOrDefault(listOf())
-            bundles.value = data.getBundles().getOrDefault(listOf())
+            prints = data.getPrints().getOrDefault(listOf())
+            bundles = data.getBundles().getOrDefault(listOf())
         }
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Adaptive(200.dp),
             verticalItemSpacing = 6.dp,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             content = {
-
                 items(
                     when (state) {
-                        0 -> prints.value.size
-                        else -> bundles.value.size
+                        0 -> prints.size
+                        else -> bundles.size
                     }
                 ) { index ->
-
                     if (state == 0) {
                         Card (
-                            onClick = {}
+                            onClick = { printOnClick(prints[index]) }
                         ){
-                            Card{ PrintImage(prints.value[index].url) }
+                            Card{ PrintImage(prints[index].url) }
 
                             Text(
-                                prints.value[index].name,
+                                prints[index].name,
                                 Modifier.padding(10.dp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     } else {
-                        Card {
-                            Card { PrintImage(bundles.value[index].prints[0].url) }
+                        Card (
+                            onClick = { bundleOnClick(bundles[index]) }
+                        ) {
+                            Card { PrintImage(bundles[index].prints[0].url) }
                             Text(
-                                bundles.value[index].name,
+                                bundles[index].name,
                                 Modifier.padding(10.dp),
                                 fontWeight = FontWeight.Bold
                             )

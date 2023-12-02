@@ -1,77 +1,136 @@
 package surcharge.ui.pointOfSale
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.PriceChange
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import surcharge.utils.formatPrice
+import surcharge.utils.intPrice
+import surcharge.utils.validatePrice
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CashCheckout(innerPadding: PaddingValues = PaddingValues()) {
-    ElevatedCard(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)
-            .padding(innerPadding)
-    ) {
-        val total = 100.00
-        val cashOnHand = 500.00
+fun CashCheckout(onConfirm: () -> Unit, onDismiss: () -> Unit, total: Int) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        ) {
+            var tender by remember { mutableStateOf(formatPrice(total)) }
+            var isError by remember { mutableStateOf(false) }
+            var change by remember { mutableStateOf("0.00") }
+            Column(
+                Modifier.padding(20.dp),
+                Arrangement.spacedBy(20.dp),
+                Alignment.CenterHorizontally
+            ) {
+                Text("Cash Checkout", style = MaterialTheme.typography.headlineMedium)
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = formatPrice(total),
+                    onValueChange = {},
+                    label = { Text("Total Owed") },
+                    placeholder = { Text("69") },
+                    prefix = { Text("$") },
+                    leadingIcon = { Icon(Icons.Filled.PointOfSale, contentDescription = "Tender") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                )
+                HorizontalDivider()
+                TextField(
+                    value = tender,
+                    onValueChange = {
+                        tender = it
+                        isError = !(validatePrice(tender) && intPrice(tender) > total)
+                        if (!isError) change =
+                            formatPrice((tender.toDouble() * 100).toInt() - total)
+                    },
+                    label = { Text("Tender") },
+                    placeholder = { Text("69") },
+                    prefix = { Text("$") },
+                    leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = "Tender") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    isError = isError,
+                    supportingText = {
+                        Text(
+                            when (isError) {
+                                true -> "Invalid Input"
+                                false -> ""
+                            }
+                        )
+                    },
+                    modifier = Modifier.semantics {
+                        if (isError) error("Format must be of the form 0.00")
+                    }
+                )
 
-        var text by rememberSaveable { mutableStateOf(total.toString()) }
-
-        TextField(
-            value = text,
-            onValueChange = { text = it },
-            label = { Text("Tender") },
-            placeholder = { Text("69") },
-            prefix = { Text("$") },
-            leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-        )
-
-        TextField(
-            value = (text.toDouble() - total).toString(),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Change") },
-            prefix = { Text("$") },
-            leadingIcon = { Icon(Icons.Filled.PriceChange, contentDescription = null) },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-        )
-
-        // calculate cash to hand back
+                TextField(
+                    value = change,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Change") },
+                    prefix = { Text("$") },
+                    leadingIcon = { Icon(Icons.Filled.PriceChange, contentDescription = "Change") },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    isError = isError,
+                    supportingText = { Text("Input amount tendered to calculate required change") }
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(
+                        onClick = onDismiss,
+                    ) {
+                        Text("Cancel")
+                    }
+                    TextButton(
+                        onClick = onConfirm,
+                        enabled = !isError
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
     }
 }
 
 @Preview
 @Composable
 private fun Prev() {
-    CashCheckout()
+    CashCheckout({}, {}, 10000)
 }

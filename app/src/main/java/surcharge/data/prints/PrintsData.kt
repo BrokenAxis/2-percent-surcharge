@@ -4,6 +4,7 @@ import surcharge.types.Artist
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Size
+import surcharge.types.createPrintItem
 
 val matthew = Artist("Matthew")
 val vincent = Artist("Vincent")
@@ -14,7 +15,7 @@ val asa = Print(
     "https://jongjeh.vercel.app/_image?href=%2F_astro%2FAsaAndYoru.6d6ffc83.jpg&f=webp",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     matthew
 )
 
@@ -24,7 +25,7 @@ val link = Print(
     "https://jongjeh.vercel.app/_image?href=%2F_astro%2Fof+the+wild.a8b65806.jpg&f=webp",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     matthew
 )
 
@@ -34,7 +35,7 @@ val quanxi = Print(
     "https://jongjeh.vercel.app/_image?href=%2F_astro%2FQuanxi.2819ef9d.png&f=webp",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     matthew
 )
 
@@ -44,7 +45,7 @@ val daijin = Print(
     "https://jongjeh.vercel.app/_image?href=%2F_astro%2Fdaijin.92ac5ad6.jpg&f=webp",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     matthew
 )
 
@@ -54,7 +55,7 @@ val spot = Print(
     "https://res.cloudinary.com/domzlxwcp/image/upload/v1701323925/prints/the%20spot.jpg",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     vincent
 )
 
@@ -64,7 +65,7 @@ val angel = Print(
     "https://res.cloudinary.com/domzlxwcp/image/upload/v1701324151/prints/angel%20devil.jpg",
     listOf(Size.A5, Size.A3),
     mapOf(Size.A5 to 10, Size.A3 to 5),
-    mapOf(Size.A5 to 30.0, Size.A3 to 50.0),
+    mapOf(Size.A5 to 3000, Size.A3 to 5000),
     vincent
 )
 
@@ -72,16 +73,14 @@ val prints = listOf(asa, link, quanxi, daijin, spot, angel)
 
 val chainsawBundle = Bundle(
     "Chainsaw Man Bundle",
-    listOf(asa, angel),
-    mapOf(asa to Size.A3, angel to Size.A3),
-    80.0
+    listOf(createPrintItem(asa, Size.A3), createPrintItem(angel, Size.A3)),
+    8000
 )
 
 val randomBundle = Bundle(
     "Random Bundle",
-    listOf(link, spot),
-    mapOf(link to Size.A3, spot to Size.A3),
-    80.0
+    listOf(createPrintItem(link, Size.A3), createPrintItem(spot, Size.A3)),
+    8000
 )
 
 val bundles = listOf(chainsawBundle, randomBundle)

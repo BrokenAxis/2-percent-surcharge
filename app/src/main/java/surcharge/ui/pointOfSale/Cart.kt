@@ -1,5 +1,8 @@
 package surcharge.ui.pointOfSale
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,20 +27,45 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.squareup.sdk.pos.PosClient
+import com.squareup.sdk.pos.PosSdk
+import io.github.cdimascio.dotenv.dotenv
+import surcharge.types.PaymentType
+import surcharge.types.PrintItem
+import surcharge.types.Sale
+import surcharge.utils.formatPrice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Cart(onClose: () -> Unit = {}) {
-    var checkout by remember { mutableStateOf(false) }
+fun Cart(
+    onClose: () -> Unit,
+    onCheckout: () -> Unit,
+    sale: Sale
+) {
+    var cashCheckout by remember { mutableStateOf(false) }
+    var onResult by remember { mutableStateOf(false) }
+    var result: ActivityResult? = null
+
+    if (cashCheckout) {
+        CashCheckout(
+            onConfirm = {
+                cashCheckout = false
+                onCheckout()
+            },
+            onDismiss = { cashCheckout = false },
+            total = sale.price
+        )
+    }
+
     ElevatedCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -60,44 +88,59 @@ fun Cart(onClose: () -> Unit = {}) {
         }
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
 
-        val receipt = listOf(Pair("Potato Print - A5", 69.69), Pair("Jogo Print - A3", 420.10))
-
-        var total = 0.0
-        receipt.forEach {
-            total += it.second
+        var total = 0
+        sale.items.forEach {
+            val itemTotal = it.price * it.quantity
+            total += itemTotal
 
             Row(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 20.dp)
             ) {
-                Icon(Icons.Filled.DragHandle, "drag", Modifier, MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    Icons.Filled.DragHandle,
+                    "drag",
+                    Modifier,
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Text(
-                    text = "1x ${it.first}", // TODO: amounts
+                    text = "${it.quantity}x ${it.name}${
+                        when (it is PrintItem) {
+                            true -> " - ${it.size}"
+                            else -> ""
+                        }
+                    }",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(10.dp),
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    "$ ${"%.2f".format(it.second)}",
+                    "$ ${formatPrice(itemTotal)}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = 20.dp))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
 
         }
-        val totalString = "%.2f".format(total)
+
         Spacer(Modifier.weight(1f))
 
-        var selectedIndex by remember { mutableIntStateOf(0) }
+        var selectedIndex by remember { mutableStateOf(PaymentType.CASH) }
         val options = listOf("Cash", "Card")
         SingleChoiceSegmentedButtonRow(Modifier.padding(10.dp)) {
             options.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    onClick = { selectedIndex = index },
-                    selected = index == selectedIndex
+                    onClick = { selectedIndex = when (index) {
+                        0 -> PaymentType.CASH
+                        else -> PaymentType.CARD
+                    } },
+                    selected = index == selectedIndex.ordinal
                 ) {
                     Text(label)
                 }
@@ -120,32 +163,53 @@ fun Cart(onClose: () -> Unit = {}) {
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    "$ $totalString",
+                    "$ ${formatPrice(total)}",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
-                FloatingActionButton(onClick = { checkout = true }, modifier = Modifier.padding(30.dp)) {
+                val dotenv = dotenv {
+                    directory = "/assets"
+                    filename = "env" // instead of '.env', use 'env'
+                }
+
+                val applicationId = dotenv["APPLICATION_ID"]
+                val posClient = PosSdk.createClient(LocalContext.current, applicationId)
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult(),
+                    onResult = {
+                        result = it
+                        onResult = true
+                    }
+                )
+
+                FloatingActionButton(onClick = {
+                    if (total != 0) {
+                        when (selectedIndex) {
+                            PaymentType.CASH -> cashCheckout = true
+                            PaymentType.CARD -> handleCardCheckout(total, posClient, launcher)
+                        }
+                    }
+
+                }, modifier = Modifier.padding(30.dp)) {
                     Icon(Icons.Filled.ShoppingCartCheckout, "Checkout")
                 }
-                if (checkout) CheckoutOnClick(state = selectedIndex, total = total)
+
+                if (onResult) result?.let { OnCardCheckoutResult(it, posClient) }
             }
         }
     }
-
-
 }
 
 @Composable
-fun CheckoutOnClick(state: Int, total:Double) {
-    when (state) {
-        0 -> TODO()
-        1 -> HandleCardCheckout((total * 100).toInt())
-    }
+fun OnCardCheckoutResult(result: ActivityResult, posClient: PosClient) {
+    val error = posClient.parseChargeError(result.data!!)
+    error.code
+    error.debugDescription
 }
 
 @Preview
 @Composable
 private fun Prev() {
-    Cart()
+    Cart({}, {}, Sale())
 
 }

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.a2percentsurcharge"
+    namespace = "surcharge"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.a2percentsurcharge"
+        applicationId = "com.surcharge"
         minSdk = 30
         targetSdk = 34
         versionCode = 1

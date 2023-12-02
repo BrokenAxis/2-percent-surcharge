@@ -4,8 +4,14 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat.startActivity
 import com.squareup.sdk.pos.ChargeRequest
 import com.squareup.sdk.pos.CurrencyCode
 import com.squareup.sdk.pos.PosClient
@@ -16,7 +22,7 @@ import io.github.cdimascio.dotenv.dotenv
 class CardCheckout : Activity() {
 
     companion object {
-        private val dotenv = dotenv{
+        private val dotenv = dotenv {
             directory = "/assets"
             filename = "env" // instead of '.env', use 'env'
         }
@@ -24,7 +30,7 @@ class CardCheckout : Activity() {
         private val applicationId = dotenv["APPLICATION_ID"]
     }
 
-    private lateinit var posClient : PosClient
+    private lateinit var posClient: PosClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,26 +56,24 @@ class CardCheckout : Activity() {
 
 }
 
-@Composable
-fun HandleCardCheckout(total: Int) {
-    val dotenv = dotenv{
-        directory = "/assets"
-        filename = "env" // instead of '.env', use 'env'
+fun handleCardCheckout(
+    total: Int,
+    posClient: PosClient,
+    launcher: ManagedActivityResultLauncher<Intent, ActivityResult>
+) {
+
+        val request = ChargeRequest.Builder(
+            total,
+            CurrencyCode.AUD
+        )
+            .build()
+        try {
+            val intent: Intent = posClient.createChargeIntent(request)
+            launcher.contract
+            launcher.launch(intent)
+    } catch (e: ActivityNotFoundException) {
+        print(e.message)
     }
-
-    val applicationId = dotenv["APPLICATION_ID"]
-    val posClient = PosSdk.createClient(LocalContext.current, applicationId)
-    val chargeRequestCode = 1
-
-    val request = ChargeRequest.Builder(
-        total,
-        CurrencyCode.AUD
-    )
-        .build()
-        val intent: Intent = posClient.createChargeIntent(request)
-        val activity = LocalContext.current as Activity
-
-        activity.startActivityForResult(intent, chargeRequestCode)
 
 
 }

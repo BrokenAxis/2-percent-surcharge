@@ -72,7 +72,7 @@ fun EditMenu(
             )
         },
     ) { innerPadding ->
-        PrintLayout(prints, innerPadding)
+        PrintLayout(prints, innerPadding = innerPadding)
     }
 }
 

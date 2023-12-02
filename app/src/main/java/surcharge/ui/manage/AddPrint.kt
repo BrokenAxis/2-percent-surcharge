@@ -2,6 +2,7 @@ package surcharge.ui.manage
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -190,7 +191,7 @@ fun SizeDropdown() {
             value = selectedOptionText,
             onValueChange = {},
             label = { Text("Print Size") },
-            leadingIcon = { Icon(Icons.Filled.Image, "Size")},
+            leadingIcon = { Icon(Icons.Filled.Image, "Size") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
@@ -234,14 +235,14 @@ fun AddImageButton() {
     }
     val launcher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
+            contract = ActivityResultContracts.PickVisualMedia()
         )
         { uri: Uri? ->
             imageUri = uri
         }
 
     FilledTonalButton(
-        onClick = { launcher.launch("image/*") },
+        onClick = { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         modifier = Modifier.padding(horizontal = 30.dp, vertical = 10.dp)
     ) {
         Text("Upload Image")

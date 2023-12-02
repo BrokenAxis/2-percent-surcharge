@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "2 Percent Surcharge"
+rootProject.name = "Surcharge"
 include(":app")
