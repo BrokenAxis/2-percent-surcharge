@@ -62,25 +62,27 @@
      - [ ] edit
      - [ ] delete
   - bundle
-    - [ ] add
+    - [x] add
     - [ ] edit
     - [ ] delete
   - [ ] search and filter
 - Point of Sale
   - [x] page
   - print
-    - [ ] add
+    - [x] add
     - [ ] edit
-    - [ ] delete
+    - [x] delete
   - bundle
-    - [ ] add
+    - [x] add
     - [ ] edit
-    - [ ] delete
+    - [x] delete
   - [ ] search and filter
-  -  [x] cart
-  -  [ ] handle card payment via square 
+  - [x] cart
+  - [ ] handle card payment via square 
 - Review
-  - [ ] everything
+  - [x] list of sales
+  - [ ] profit breakdown by artist
+  - [ ] analytics
 
 ## Backend
 

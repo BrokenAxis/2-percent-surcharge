@@ -1,23 +1,22 @@
 package surcharge.ui.manage
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
@@ -32,8 +32,8 @@ import surcharge.data.prints.Data
 import surcharge.data.prints.DataImpl
 import surcharge.types.Bundle
 import surcharge.types.Print
-import surcharge.utils.gallery.TabGallery
 import surcharge.utils.gallery.Tab
+import surcharge.utils.gallery.TabGallery
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +48,7 @@ fun EditMenu(
     var tab by remember { mutableStateOf(Tab.Print) }
 
     var openAddPrintDialog by remember { mutableStateOf(false) }
-    val print by remember { mutableStateOf(Print()) }
+    var print by remember { mutableStateOf(Print()) }
     if (openAddPrintDialog) {
         Dialog(
             onDismissRequest = { openAddPrintDialog = false },
@@ -69,7 +69,7 @@ fun EditMenu(
     }
 
     var openAddBundleDialog by remember { mutableStateOf(false) }
-    val bundle by remember { mutableStateOf(Bundle()) }
+    var bundle by remember { mutableStateOf(Bundle()) }
     if (openAddBundleDialog) {
         Dialog(
             onDismissRequest = { openAddBundleDialog = false },
@@ -82,6 +82,46 @@ fun EditMenu(
                     openAddBundleDialog = false
                     scope.launch { data.addBundle(bundle) }
                     scope.launch { snackbarHostState.showSnackbar("Bundle Added!") }
+                },
+                data,
+                bundle
+            )
+        }
+    }
+
+    var viewPrint by remember { mutableStateOf(false) }
+    if (viewPrint) {
+        Dialog(
+            onDismissRequest = { viewPrint = false },
+            DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ViewPrint(
+                { viewPrint = false },
+                {
+                    refresh++
+                    viewPrint = false
+                    scope.launch { data.editPrint(print.name, print) }
+                    scope.launch { snackbarHostState.showSnackbar("Print Edited!") }
+                },
+                data,
+                print
+            )
+        }
+    }
+
+    var viewBundle by remember { mutableStateOf(false) }
+    if (viewBundle) {
+        Dialog(
+            onDismissRequest = { viewBundle = false },
+            DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ViewBundle(
+                { viewBundle = false },
+                {
+                    refresh++
+                    viewBundle = false
+                    scope.launch { data.editBundle(bundle.name, bundle) }
+                    scope.launch { snackbarHostState.showSnackbar("Bundle Edited!") }
                 },
                 data,
                 bundle
@@ -151,6 +191,14 @@ fun EditMenu(
                 data,
                 onSwitchTab = {
                     tab = it
+                },
+                printOnClick = {
+                    print = it
+                    viewPrint = true
+                },
+                bundleOnClick = {
+                    bundle = it
+                    viewBundle = true
                 },
                 innerPadding = innerPadding
             )

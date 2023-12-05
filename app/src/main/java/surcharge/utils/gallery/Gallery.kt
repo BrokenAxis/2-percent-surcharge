@@ -98,7 +98,7 @@ fun PrintImage(url: String) {
             .data(url)
             .crossfade(true)
             .build(),
-        contentScale = ContentScale.Crop,
+        contentScale = ContentScale.Fit,
         contentDescription = null,
         modifier = Modifier
             .fillMaxWidth()
