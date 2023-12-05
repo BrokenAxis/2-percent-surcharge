@@ -6,14 +6,14 @@ Square Reader integration for card payments.
 
 ## Sample Screenshots
 
-![](./documentation/Home Page.png)
+![](./documentation/Home%20Page.png)
 
 ![](./documentation/Gallery.png)
 
-![](./documentation/Add Print.png)
+![](./documentation/Add%20Print.png)
 
 ![](./documentation/Cart.png)
 
-![](./documentation/Cash Checkout.png)
+![](./documentation/Cash%20Checkout.png)
 
 
