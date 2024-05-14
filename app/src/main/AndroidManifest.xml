@@ -18,13 +18,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme._2PercentSurcharge"
+        android:theme="@style/Theme.Surcharge"
         tools:replace="android:fullBackupContent"
         tools:targetApi="31">
         <activity
             android:name="surcharge.ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme._2PercentSurcharge">
+            android:theme="@style/Theme.Surcharge">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

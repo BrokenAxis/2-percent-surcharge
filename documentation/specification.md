@@ -37,6 +37,8 @@
   - decrements stock accordingly
 
 **Review**
+- The Shame Counter
+  - big display, whichever artist has sold more is bigger
 - List all transactions
   - transaction breakdown
 - Profit
@@ -44,6 +46,13 @@
 - Remaining stock
 - Remaining cash on hand
 - Sales analytics
+  - graphs
+  - profit per hour
+  - money lost via bundles
+
+**Extras**
+- Timesheet
+- Payslip?
 
 ## Frontend
 - Jetpack Compose
@@ -59,11 +68,11 @@
   - [x] page
   - print
      - [x] add
-     - [ ] edit
+     - [x] edit
      - [ ] delete
   - bundle
     - [x] add
-    - [ ] edit
+    - [x] edit
     - [ ] delete
   - [ ] search and filter
 - Point of Sale

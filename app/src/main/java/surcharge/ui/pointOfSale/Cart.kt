@@ -41,37 +41,30 @@ import com.squareup.sdk.pos.PosClient
 import com.squareup.sdk.pos.PosSdk
 import io.github.cdimascio.dotenv.dotenv
 import surcharge.types.PaymentType
-import surcharge.types.PrintItem
 import surcharge.types.Sale
 import surcharge.utils.formatPrice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Cart(
-    onClose: () -> Unit,
-    onCheckout: () -> Unit,
-    sale: Sale
+    onClose: () -> Unit, onCheckout: () -> Unit, sale: Sale
 ) {
     var cashCheckout by remember { mutableStateOf(false) }
     var onResult by remember { mutableStateOf(false) }
     var result: ActivityResult? = null
 
     if (cashCheckout) {
-        CashCheckout(
-            onConfirm = {
-                cashCheckout = false
-                onCheckout()
-            },
-            onDismiss = { cashCheckout = false },
-            total = sale.price
+        CashCheckout(onConfirm = {
+            cashCheckout = false
+            onCheckout()
+        }, onDismiss = { cashCheckout = false }, total = sale.price
         )
     }
 
     ElevatedCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        modifier = Modifier
+        ), modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
     ) {
@@ -89,10 +82,10 @@ fun Cart(
         }
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
 
-        var total by remember { mutableIntStateOf(sale.items.sumOf { it.price * it.quantity }) }
+        var total by remember { mutableIntStateOf(sale.prints.sumOf { it.price * it.quantity } + sale.bundles.sumOf { it.price * it.quantity }) }
 
         key(total) {
-            sale.items.forEach { item ->
+            sale.bundles.forEach { item ->
                 val itemTotal = item.price * item.quantity
 
                 Row(
@@ -101,8 +94,8 @@ fun Cart(
                     modifier = Modifier.padding(horizontal = 20.dp)
                 ) {
                     IconButton(onClick = {
-                        sale.items.remove(item)
-                        total = sale.items.sumOf { it.price * it.quantity }
+                        sale.bundles.remove(item)
+                        total = sale.bundles.sumOf { it.price * it.quantity }
                     }) {
                         Icon(
                             Icons.Filled.Close,
@@ -113,12 +106,46 @@ fun Cart(
                     }
 
                     Text(
-                        text = "${item.quantity}x ${item.name}${
-                            when (item is PrintItem) {
-                                true -> " - ${item.size}"
-                                else -> ""
-                            }
-                        }",
+                        text = "${item.quantity}x ${item.name}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(10.dp),
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        "$ ${formatPrice(itemTotal)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+
+            }
+
+            sale.prints.forEach { item ->
+                val itemTotal = item.price * item.quantity
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                ) {
+                    IconButton(onClick = {
+                        sale.prints.remove(item)
+                        total = sale.prints.sumOf { it.price * it.quantity }
+                    }) {
+                        Icon(
+                            Icons.Filled.Close,
+                            "Delete",
+                            Modifier,
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Text(
+                        text = "${item.quantity}x ${item.name} - ${item.size}",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(10.dp),
                     )
@@ -186,13 +213,12 @@ fun Cart(
 
                 val applicationId = dotenv["APPLICATION_ID"]
                 val posClient = PosSdk.createClient(LocalContext.current, applicationId)
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.StartActivityForResult(),
-                    onResult = {
-                        result = it
-                        onResult = true
-                    }
-                )
+                val launcher =
+                    rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult(),
+                        onResult = {
+                            result = it
+                            onResult = true
+                        })
 
                 FloatingActionButton(onClick = {
                     if (total != 0) {

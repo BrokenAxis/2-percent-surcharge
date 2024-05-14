@@ -42,16 +42,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import surcharge.data.prints.Data
-import surcharge.data.prints.DataImpl
+import surcharge.data.prints.TempData
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.PrintItem
 import surcharge.types.Size
 import surcharge.types.createPrintItem
 import surcharge.utils.formatPrice
-import surcharge.utils.gallery.Gallery
-import surcharge.utils.gallery.Tab
+import surcharge.utils.components.gallery.Gallery
+import surcharge.utils.components.gallery.Tab
 import surcharge.utils.intPrice
 import surcharge.utils.validatePrice
 
@@ -119,7 +121,9 @@ fun AddBundle(
         var prints by remember { mutableStateOf(listOf<Print>()) }
 
         LaunchedEffect(true) {
-            prints = data.getPrints().getOrDefault(listOf())
+            withContext(Dispatchers.IO) {
+                prints = data.getPrints().getOrDefault(listOf())
+            }
         }
 
         var selectedSize by remember { mutableStateOf(Size.A3) }
@@ -229,5 +233,5 @@ fun AddBundle(
 @Preview
 @Composable
 private fun Prev() {
-    AddBundle(onClose = {}, onConfirm = {}, data = DataImpl(), bundle = Bundle())
+    AddBundle(onClose = {}, onConfirm = {}, data = TempData(), bundle = Bundle())
 }

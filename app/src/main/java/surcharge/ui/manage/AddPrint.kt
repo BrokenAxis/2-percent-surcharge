@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +32,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -64,12 +64,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import surcharge.utils.img.upload
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.withContext
 import surcharge.data.prints.Data
-import surcharge.data.prints.DataImpl
+import surcharge.data.prints.TempData
 import surcharge.types.Artist
 import surcharge.types.Print
 import surcharge.types.Size
+import surcharge.utils.img.upload
 import surcharge.utils.intPrice
 import surcharge.utils.validatePrice
 
@@ -122,7 +124,9 @@ fun AddPrint(
         var artists by remember { mutableStateOf(listOf<Artist>()) }
 
         LaunchedEffect(true) {
-            artists = data.getArtists().getOrDefault(listOf())
+            withContext(IO) {
+                artists = data.getArtists().getOrDefault(listOf())
+            }
         }
 
         var artistExpanded by remember { mutableStateOf(false) }
@@ -137,7 +141,7 @@ fun AddPrint(
                     .menuAnchor()
                     .fillMaxWidth(),
                 readOnly = true,
-                value = print.artist.name,
+                value = print.artist,
                 onValueChange = {},
                 label = { Text("Artist") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = artistExpanded) }
@@ -150,9 +154,10 @@ fun AddPrint(
                     DropdownMenuItem(
                         text = { Text(artist.name) },
                         onClick = {
-                            print.artist = artist
+                            print.artist = artist.name
                             artistExpanded = false
                         },
+                        modifier = Modifier.fillMaxWidth(),
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     )
                 }
@@ -237,19 +242,20 @@ fun AddPrint(
                 )
             }
             key(imageUri) {
-                upload(imageUri!!, print.artist.name, name, image, progress)
-                LinearProgressIndicator(
-                    progress = { progress.floatValue },
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 20.dp)
-                )
+                if (imageUri != null) {
+                    upload(imageUri!!, print.artist, name, image, progress)
+                    LinearProgressIndicator(
+                        progress = { progress.floatValue },
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp)
+                    )
 
-                if (image.value.isNotEmpty()) {
-                    print.url = image.value
+                    if (image.value.isNotEmpty()) {
+                        print.url = image.value
+                    }
                 }
             }
-
         }
 
         val launcher =
@@ -290,7 +296,7 @@ fun AddPrint(
                 onClick = {
                     if (name.isNotEmpty()
                         && selectedSizes.isNotEmpty()
-                        && print.artist.name.isNotEmpty()
+                        && print.artist.isNotEmpty()
                         && property.isNotEmpty()
                     ) {
                         print.sizes = selectedSizes.toList()
@@ -387,5 +393,5 @@ fun SizeDialog(print: Print, onConfirm: () -> Unit, onClose: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun AddPrintPreview() {
-    AddPrint({}, {}, DataImpl(), Print())
+    AddPrint({}, {}, TempData(), Print())
 }

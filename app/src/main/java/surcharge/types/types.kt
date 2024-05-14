@@ -1,12 +1,22 @@
 package surcharge.types
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.Instant
 import java.util.UUID
 
+// note default values will not be initialised into the database schema
+// this only becomes a problem if directly using SQL statements instead of the interface
+// change to the following if necessary:
+// @ColumnProperties(defaultValue = "") var a: String
+
+@Entity
 data class Artist(
-    val name: String = ""
+    @PrimaryKey val name: String = "",
+    var image: String = "https://cdn.britannica.com/90/236590-050-27422B8D/Close-up-of-mushroom-growing-on-field.jpg"
 )
 
+@Entity(primaryKeys = ["name", "artist"])
 data class Print(
     var name: String = "",
     var property: String = "",
@@ -14,7 +24,7 @@ data class Print(
     var sizes: List<Size> = listOf(),
     var stock: MutableMap<Size, Int> = mutableMapOf(),
     var price: MutableMap<Size, Int> = mutableMapOf(),
-    var artist: Artist = Artist()
+    var artist: String = ""
 )
 
 interface Item {
@@ -30,7 +40,7 @@ data class PrintItem(
     val size: Size = Size.A5,
     override var quantity: Int = 0,
     override var price: Int = 0,
-    val artist: Artist = Artist()
+    val artist: String = ""
 ) : Item
 
 fun createPrintItem(print: Print, size: Size, quantity: Int = 1, price: Int? = null): PrintItem {
@@ -52,17 +62,18 @@ enum class Size {
     THICC
 }
 
+@Entity
 data class Bundle(
-    var name: String = "",
+    @PrimaryKey var name: String = "",
     var prints: List<PrintItem> = listOf(),
     var price: Int = 0
 )
 
 data class BundleItem (
-    override val name: String,
-    val prints: List<PrintItem>,
-    override var quantity: Int,
-    override var price: Int
+    override val name: String = "",
+    val prints: List<PrintItem> = listOf(),
+    override var quantity: Int = 0,
+    override var price: Int = 0
 ) : Item
 
 fun createBundleItem(bundle: Bundle, quantity: Int = 1, price: Int? = null): BundleItem {
@@ -79,9 +90,11 @@ enum class PaymentType {
     CARD
 }
 
+@Entity
 data class Sale(
-    val saleId: UUID = UUID.randomUUID(),
-    var items: ArrayList<Item> = arrayListOf(),
+    @PrimaryKey val saleId: UUID = UUID.randomUUID(),
+    var prints: ArrayList<PrintItem> = arrayListOf(),
+    var bundles: ArrayList<BundleItem> = arrayListOf(),
     var price: Int = 0,
     var paymentType: PaymentType = PaymentType.CASH,
     var comment: String = "",

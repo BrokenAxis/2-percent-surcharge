@@ -8,8 +8,8 @@ import surcharge.types.Sale
 import surcharge.types.Size
 import surcharge.types.createPrintItem
 
-val matthew = Artist("Matthew")
-val vincent = Artist("Vincent")
+val matthew = Artist("Matthew", "https://res.cloudinary.com/domzlxwcp/image/upload/v1715668790/display%20pictures/oebvh5o0idwqywtf7qz5.png")
+val vincent = Artist("Vincent", "https://res.cloudinary.com/domzlxwcp/image/upload/v1715668790/display%20pictures/s9pxpslgulwg0hslahug.png")
 
 var artists = listOf(matthew, vincent)
 
@@ -20,7 +20,7 @@ val asa = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    matthew
+    "Matthew"
 )
 
 val link = Print(
@@ -30,7 +30,7 @@ val link = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    matthew
+    "Matthew"
 )
 
 val quanxi = Print(
@@ -40,7 +40,7 @@ val quanxi = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    matthew
+    "Matthew"
 )
 
 val daijin = Print(
@@ -50,7 +50,7 @@ val daijin = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    matthew
+    "Matthew"
 )
 
 val spot = Print(
@@ -60,7 +60,7 @@ val spot = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    vincent
+    "Vincent"
 )
 
 val angel = Print(
@@ -70,7 +70,7 @@ val angel = Print(
     listOf(Size.A5, Size.A3),
     mutableMapOf(Size.A5 to 10, Size.A3 to 5),
     mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
-    vincent
+    "Vincent"
 )
 
 var prints = listOf(asa, link, quanxi, daijin, spot, angel)
@@ -109,7 +109,7 @@ val img2 = listOf(
 )
 
 val sale1 = Sale(
-    items = arrayListOf(
+    prints = arrayListOf(
         createPrintItem(asa, Size.A5, 2),
         createPrintItem(spot, Size.A5, 2),
     ),
@@ -118,4 +118,4 @@ val sale1 = Sale(
     comment = "hi there"
 )
 
-var sales = listOf<Sale>(sale1,)
+var sales = listOf(sale1,)

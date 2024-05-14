@@ -9,6 +9,7 @@ object SurchargeDestinations {
     const val SHOP_ROUTE = "shop"
     const val SALES_ROUTE = "sales"
     const val CART = "cart/{a}"
+    const val SETTINGS_ROUTE = "settings"
 }
 
 class SurchargeNavigationActions(navController: NavHostController) {
@@ -43,6 +44,16 @@ class SurchargeNavigationActions(navController: NavHostController) {
 
     val navigateToSales: () -> Unit = {
         navController.navigate(SurchargeDestinations.SALES_ROUTE) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    val navigateToSettings: () -> Unit = {
+        navController.navigate(SurchargeDestinations.SETTINGS_ROUTE) {
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }

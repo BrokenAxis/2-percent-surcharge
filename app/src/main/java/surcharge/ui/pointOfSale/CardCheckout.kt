@@ -4,14 +4,8 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat.startActivity
 import com.squareup.sdk.pos.ChargeRequest
 import com.squareup.sdk.pos.CurrencyCode
 import com.squareup.sdk.pos.PosClient
@@ -43,8 +37,7 @@ class CardCheckout : Activity() {
         val request = ChargeRequest.Builder(
             total,
             CurrencyCode.AUD
-        )
-            .build()
+        ).build()
         try {
             val intent: Intent = posClient.createChargeIntent(request)
             startActivityForResult(intent, chargeRequestCode)
@@ -62,15 +55,15 @@ fun handleCardCheckout(
     launcher: ManagedActivityResultLauncher<Intent, ActivityResult>
 ) {
 
-        val request = ChargeRequest.Builder(
-            total,
-            CurrencyCode.AUD
-        )
-            .build()
-        try {
-            val intent: Intent = posClient.createChargeIntent(request)
-            launcher.contract
-            launcher.launch(intent)
+    val request = ChargeRequest.Builder(
+        total,
+        CurrencyCode.AUD
+    )
+        .build()
+    try {
+        val intent: Intent = posClient.createChargeIntent(request)
+        launcher.contract
+        launcher.launch(intent)
     } catch (e: ActivityNotFoundException) {
         print(e.message)
     }

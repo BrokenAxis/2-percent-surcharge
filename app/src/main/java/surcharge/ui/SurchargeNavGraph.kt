@@ -4,13 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import surcharge.data.AppContainer
 import surcharge.ui.home.HomeScreen
 import surcharge.ui.manage.EditMenu
 import surcharge.ui.pointOfSale.SalesMenu
 import surcharge.ui.review.ReviewScreen
+import surcharge.ui.settings.SettingsScreen
 
 @Composable
 fun SurchargeNavGraph(
@@ -33,6 +34,7 @@ fun SurchargeNavGraph(
                 onNavigateToManage = { navController.navigate(SurchargeDestinations.MANAGE_SHOP_ROUTE) },
                 onNavigateToShop = { navController.navigate(SurchargeDestinations.SHOP_ROUTE) },
                 onNavigateToSales = { navController.navigate(SurchargeDestinations.SALES_ROUTE) },
+                onNavigateToSettings = { navController.navigate(SurchargeDestinations.SETTINGS_ROUTE) }
             )
         }
         composable(
@@ -56,6 +58,14 @@ fun SurchargeNavGraph(
         ) {
             ReviewScreen(
                 appContainer.data,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = SurchargeDestinations.SETTINGS_ROUTE
+        ) {
+            SettingsScreen(
+                appContainer,
                 onBack = { navController.popBackStack() }
             )
         }

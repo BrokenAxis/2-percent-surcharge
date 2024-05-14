@@ -100,7 +100,7 @@ fun ViewPrint(
             }
         }
         Text(
-            text = "by ${print.artist.name}",
+            text = "by ${print.artist}",
             fontStyle = FontStyle.Italic,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 25.dp)

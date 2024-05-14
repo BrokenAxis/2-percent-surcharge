@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ fun HomeScreen(
     onNavigateToManage: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
     onNavigateToSales: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {}
 ) {
 
     Scaffold { innerPadding ->
@@ -37,14 +39,18 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     "Surcharge",
                     style = MaterialTheme.typography.displayLarge,
                     modifier = Modifier.padding(20.dp, 30.dp)
                 )
-                IconButton(onClick = { TODO() }) {
+                IconButton(
+                    onClick = { onNavigateToSettings() },
+                    modifier = Modifier.padding(10.dp)
+                ) {
                     Icon(Icons.Filled.Settings, "Settings")
                 }
             }
@@ -69,16 +75,17 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Welcome, jongjeh",
-                            style = MaterialTheme.typography.titleLarge
+                            "Welcome, jongjeh", style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.AccountCircle, "Account")
                     }
                 }
                 Card(
                     onClick = { onNavigateToManage() },
-                    modifier = Modifier
-                    .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                    )
                 ) {
                     Row(
                         modifier = Modifier
@@ -88,48 +95,23 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Manage Shop",
-                            Modifier,
-                            style = MaterialTheme.typography.titleLarge
+                            "Manage Shop", Modifier, style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.Inventory, "Manage Shop")
                     }
                     Text(
                         "Add new prints or edit existing ones. Update stock, sizes and price. Create discounts and bundles.",
-                        Modifier.padding(10.dp),
+                        Modifier.padding(20.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
                 Card(
                     onClick = { onNavigateToShop() },
-                    modifier = Modifier
-                    .fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Point of Sale",
-                            Modifier,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Icon(Icons.Filled.PointOfSale, "Point of Sale")
-                    }
-                    Text(
-                        "Select prints and bundles for a sale. Manually add discounts or comments. Processes card payments with Square.",
-                        Modifier.padding(10.dp),
-                        style = MaterialTheme.typography.bodyMedium
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
                     )
-                }
-
-                Card(
-                    onClick = { onNavigateToSales() },
-                    modifier = Modifier
-                    .fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
@@ -139,15 +121,41 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Review Sales",
-                            Modifier,
-                            style = MaterialTheme.typography.titleLarge
+                            "Point of Sale", Modifier, style = MaterialTheme.typography.titleLarge
+                        )
+                        Icon(Icons.Filled.PointOfSale, "Point of Sale")
+                    }
+                    Text(
+                        "Select prints and bundles for a sale. Manually add discounts or comments. Processes card payments with Square.",
+                        Modifier.padding(20.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Card(
+                    onClick = { onNavigateToSales() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        MaterialTheme.colorScheme.surfaceColorAtElevation(
+                            2.dp
+                        )
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Review Sales", Modifier, style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.Savings, "Review Sales")
                     }
                     Text(
                         "See sales history, income breakdown by artist and analytics",
-                        Modifier.padding(10.dp),
+                        Modifier.padding(20.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
