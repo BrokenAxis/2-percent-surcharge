@@ -23,11 +23,11 @@ class MainActivity: ComponentActivity() {
 
             LaunchedEffect(appContainer.theme) {
                 withContext(Dispatchers.IO) {
-                    appContainer.theme.value = appContainer.settings.readTheme()
+                    appContainer.theme.intValue = appContainer.settings.readTheme()
                 }
             }
 
-            SurchargeTheme(appContainer.theme.value) {
+            SurchargeTheme(appContainer.theme.intValue) {
                 HomeScreen()
                 SurchargeApp(appContainer)
             }
