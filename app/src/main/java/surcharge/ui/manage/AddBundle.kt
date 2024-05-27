@@ -1,9 +1,11 @@
 package surcharge.ui.manage
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absolutePadding
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,9 +54,9 @@ import surcharge.types.Print
 import surcharge.types.PrintItem
 import surcharge.types.Size
 import surcharge.types.createPrintItem
-import surcharge.utils.formatPrice
 import surcharge.utils.components.gallery.Gallery
 import surcharge.utils.components.gallery.Tab
+import surcharge.utils.formatPrice
 import surcharge.utils.intPrice
 import surcharge.utils.validatePrice
 
@@ -73,26 +76,40 @@ fun AddBundle(
             .fillMaxSize()
             .padding(10.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(20.dp)) {
-            Icon(Icons.Filled.Collections, "Bundle")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(vertical = 10.dp)
+                .fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Collections, "Bundle",
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
             Text(
                 text = "Add a Bundle",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(horizontal = 10.dp)
+                style = MaterialTheme.typography.headlineMedium
             )
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onClose) {
                 Icon(Icons.Filled.Close, "Close")
             }
         }
-        HorizontalDivider(Modifier.padding(horizontal = 20.dp))
+        HorizontalDivider()
+
         var total by remember { mutableIntStateOf(0) }
         var name by remember { mutableStateOf("") }
+        var nameError by remember { mutableStateOf(false) }
         var price by remember { mutableStateOf("0.00") }
-        Row (Modifier.fillMaxWidth()) {
+        var priceError by remember { mutableStateOf(false) }
+
+        Row(Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = {
+                    name = it
+                    nameError = name.isEmpty()
+                },
                 label = { Text("Name") },
                 placeholder = { Text("Bundle") },
                 leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
@@ -100,11 +117,15 @@ fun AddBundle(
                 textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .padding(horizontal = 20.dp, vertical = 10.dp)
-                    .weight(0.5f)
+                    .weight(0.5f),
+                isError = nameError
             )
             OutlinedTextField(
                 value = price,
-                onValueChange = { price = it },
+                onValueChange = {
+                    price = it
+                    priceError = validatePrice(price)
+                },
                 label = { Text("Price") },
                 placeholder = { Text("69") },
                 leadingIcon = { Icon(Icons.Filled.Payments, contentDescription = null) },
@@ -114,8 +135,8 @@ fun AddBundle(
                 textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .padding(horizontal = 20.dp, vertical = 10.dp)
-                    .weight(0.5f)
-
+                    .weight(0.5f),
+                isError = priceError
             )
         }
         var prints by remember { mutableStateOf(listOf<Print>()) }
@@ -127,11 +148,13 @@ fun AddBundle(
         }
 
         var selectedSize by remember { mutableStateOf(Size.A3) }
-        var shownPrints = prints.filter { it.sizes.contains(selectedSize) }
         val selectedPrints = remember { mutableStateListOf<PrintItem>() }
+        var shownPrints = prints.filter { it.sizes.contains(selectedSize) }
+
+        var refreshQuantity by remember { mutableIntStateOf(0) }
 
         Card(
-            Modifier.height(290.dp),
+            Modifier.height(320.dp),
             colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)
         ) {
             Gallery(Tab.Print, shownPrints, printOnClick = {
@@ -141,85 +164,90 @@ fun AddBundle(
                     selectedPrints.add(createPrintItem(it, selectedSize, 1))
                 } else {
                     selectedPrints[printIndex].quantity++
-                    // cant think of a better way to trigger a recomposition TODO
-                    selectedPrints.add(PrintItem())
-                    selectedPrints.remove(PrintItem())
+                    refreshQuantity++
                 }
                 total = selectedPrints.sumOf { item -> item.price * item.quantity }
             })
         }
 
         SingleChoiceSegmentedButtonRow(Modifier.padding(10.dp)) {
-            Size.values().forEachIndexed { index, size ->
+            Size.entries.forEachIndexed { index, size ->
                 SegmentedButton(
                     selected = index == selectedSize.ordinal,
                     onClick = {
-                        selectedSize = Size.values()[index]
+                        selectedSize = Size.entries.toTypedArray()[index]
                         shownPrints = prints.filter { it.sizes.contains(selectedSize) }
                     },
                     shape = SegmentedButtonDefaults.itemShape(
-                        index = index, count = Size.values().size
+                        index = index, count = Size.entries.size
                     )
                 ) {
                     Text(size.toString())
                 }
             }
         }
-        Card(
-            Modifier
-                .height(190.dp)
-                .verticalScroll(rememberScrollState())) {
-            selectedPrints.forEach {
-                val itemTotal = it.price * it.quantity
 
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                ) {
-                    IconButton(onClick = { selectedPrints.remove(it) }) {
-                        Icon(
-                            Icons.Filled.Close,
-                            "drag",
-                            Modifier,
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Text(
-                        text = "${it.quantity}x ${it.name} - ${it.size}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(10.dp),
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        "$ ${formatPrice(itemTotal)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp)
+        Box {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Selected Prints",
+                    style = MaterialTheme.typography.titleLarge
                 )
+
+                key(refreshQuantity) {
+                    selectedPrints.forEach {
+                        val itemTotal = it.price * it.quantity
+
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { selectedPrints.remove(it) }) {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    "delete",
+                                    Modifier,
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                text = "${it.quantity}x ${it.name} - ${it.size}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(10.dp),
+                            )
+
+                            Spacer(Modifier.weight(1f))
+                            Text(
+                                "$ ${formatPrice(itemTotal)}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        HorizontalDivider()
+                    }
+                    Spacer(Modifier.height(50.dp))
+                }
             }
-        }
 
-        Spacer(Modifier.weight(1f))
-
-        Row(horizontalArrangement = Arrangement.End) {
-            Spacer(modifier = Modifier.weight(1f))
             FloatingActionButton(
                 onClick = {
-                    if (name.isNotEmpty()
-                        && validatePrice(price)
-                    ) {
+                    nameError = name.isEmpty()
+                    priceError = validatePrice(price)
+                    if (!nameError && !priceError) {
                         bundle.name = name
                         bundle.price = intPrice(price)
                         bundle.prints = selectedPrints.toList()
                         onConfirm()
                     }
                 },
-                modifier = Modifier.absolutePadding(bottom = 30.dp, right = 30.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .absoluteOffset(x = (-10).dp, y = (-10).dp)
             ) {
                 Icon(
                     Icons.Outlined.Check,

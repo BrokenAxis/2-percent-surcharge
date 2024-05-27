@@ -17,20 +17,24 @@ fun formatPrice(price: Int): String {
 
 // get the Int from of formatted a price string
 fun intPrice(price: String): Int {
-    return (price.substringBefore('.') + price.substringAfter('.')).toInt()
+    return (price.substringBefore('.', price + "00") + price.substringAfter('.', "")).toInt()
 }
 
-// confirm that a price is formatted correctly
+/**
+ * Returns `true` if the string is formatted as a valid price
+ */
 fun validatePrice(price: String): Boolean {
-    return price.length >= 4
+    val noDecimal = price.isNotEmpty() && price.isDigitsOnly() && !price.contains('.')
+    val decimal = price.length >= 4
             && price[price.length - 3] == '.'
             && price.substringAfter('.').isDigitsOnly()
             && price.substringBefore('.').isDigitsOnly()
+    return noDecimal || decimal
 }
 
 fun formatTime(timestamp: Instant): String {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm a")
-        .withZone(ZoneId.systemDefault())
+    val formatter =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm a").withZone(ZoneId.systemDefault())
 
     return formatter.format(timestamp)
 }

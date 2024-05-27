@@ -4,24 +4,25 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,9 +56,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -90,9 +91,12 @@ fun AddPrint(
         modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
-            .verticalScroll(rememberScrollState())
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(20.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(start = 20.dp, top = 10.dp)
+        ) {
             Icon(Icons.Filled.Image, "Print")
             Text(
                 text = "Add a Print",
@@ -104,11 +108,11 @@ fun AddPrint(
                 Icon(Icons.Filled.Close, "Close")
             }
         }
-        HorizontalDivider(Modifier.padding(horizontal = 20.dp))
+        HorizontalDivider()
 
         var name by remember { mutableStateOf("") }
 
-        OutlinedTextField(
+        TextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Print Name") },
@@ -134,12 +138,14 @@ fun AddPrint(
         ExposedDropdownMenuBox(
             expanded = artistExpanded,
             onExpandedChange = { artistExpanded = !artistExpanded },
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+            modifier = Modifier
+                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .fillMaxWidth()
         ) {
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .menuAnchor(),
                 readOnly = true,
                 value = print.artist,
                 onValueChange = {},
@@ -180,17 +186,9 @@ fun AddPrint(
                 .fillMaxWidth()
         )
 
-        Text(
-            "Sizes",
-            Modifier.padding(horizontal = 20.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        Spacer(Modifier.height(10.dp))
-
         val selectedSizes = remember { mutableStateListOf<Size>() }
 
-        val sizes = Size.values()
+        val sizes = Size.entries.toTypedArray()
 
         MultiChoiceSegmentedButtonRow(Modifier.padding(horizontal = 20.dp)) {
             sizes.forEachIndexed { index, size ->
@@ -213,102 +211,100 @@ fun AddPrint(
         }
 
         var imageUri by remember { mutableStateOf<Uri?>(null) }
-        var showPreview by remember { mutableStateOf(false) }
         val image = remember { mutableStateOf("") }
         val progress = remember { mutableFloatStateOf(0f) }
-
-        if (showPreview) {
-            Card(
-                Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(20.dp)
-            ) {
-                Card(Modifier.fillMaxWidth()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageUri)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "",
-                        contentScale = ContentScale.FillWidth,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
-                Text(
-                    "Preview",
-                    Modifier.padding(10.dp),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            key(imageUri) {
-                if (imageUri != null) {
-                    upload(imageUri!!, print.artist, name, image, progress)
-                    LinearProgressIndicator(
-                        progress = { progress.floatValue },
-                        Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 20.dp)
-                    )
-
-                    if (image.value.isNotEmpty()) {
-                        print.url = image.value
-                    }
-                }
-            }
-        }
-
-        val launcher =
-            rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.PickVisualMedia()
-            )
-            { uri: Uri? ->
-                imageUri = uri
-                showPreview = true
-            }
-
-        FilledTonalButton(
-            onClick = {
-                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            },
-            modifier = Modifier.padding(horizontal = 30.dp, vertical = 10.dp)
-        ) {
-            Text("Upload Image")
-        }
-
         var sizeDialog by remember { mutableStateOf(false) }
 
         if (sizeDialog) {
             SizeDialog(
                 print = print,
                 onConfirm = {
-                    print.name = name
-                    print.property = property
                     sizeDialog = false
                     onConfirm()
                 },
                 onClose = { sizeDialog = false })
         }
 
-        Row(horizontalArrangement = Arrangement.End) {
-            Spacer(modifier = Modifier.weight(1f))
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                Card(modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp)) {
+                    Text(
+                        text = "Preview",
+                        modifier = Modifier.padding(start = 10.dp, top = 10.dp, bottom = 5.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(.75f),
+                        shape = RectangleShape,
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)
+                    ) {
+                        if (imageUri != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUri)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "uploaded image",
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    }
+                }
+
+                key(imageUri) {
+                    if (imageUri != null && progress.floatValue != 1f) {
+                        upload(imageUri!!, print.artist, print.name, image, progress)
+                        LinearProgressIndicator(
+                            progress = { progress.floatValue },
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .fillMaxWidth()
+                        )
+                        if (image.value.isNotEmpty()) {
+                            print.url = image.value
+                        }
+                    } else Spacer(Modifier.height(5.dp))
+                }
+            }
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia()
+            ) { uri: Uri? ->
+                imageUri = uri
+            }
+
+            FilledTonalButton(
+                onClick = {
+                    launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                modifier = Modifier
+                    .padding(start = 30.dp, bottom = 30.dp)
+                    .align(Alignment.BottomStart),
+                enabled = print.artist.isNotEmpty() && name.isNotEmpty()
+            ) {
+                Text("Upload Image")
+            }
+
             FloatingActionButton(
                 onClick = {
-                    if (name.isNotEmpty()
+                    if (print.name.isNotEmpty()
                         && selectedSizes.isNotEmpty()
                         && print.artist.isNotEmpty()
-                        && property.isNotEmpty()
+                        && print.property.isNotEmpty()
                     ) {
+                        print.name
+                        print.property
                         print.sizes = selectedSizes.toList()
                         sizeDialog = true
                     }
                 },
-                modifier = Modifier.padding(30.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .absoluteOffset(x = (-15).dp, y = (-15).dp)
             ) {
-                Icon(
-                    Icons.Outlined.Check,
-                    "Confirm Button"
-                )
+                Icon(Icons.Filled.Check, "Confirm")
             }
         }
     }

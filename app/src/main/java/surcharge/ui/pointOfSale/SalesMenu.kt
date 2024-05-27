@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
@@ -55,7 +54,6 @@ import surcharge.data.prints.TempData
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Sale
-import surcharge.types.Size
 import surcharge.types.createBundleItem
 import surcharge.types.createPrintItem
 import surcharge.utils.components.gallery.TabGallery
@@ -84,7 +82,7 @@ fun SalesMenu(
             onDismissRequest = { openCartDialog = false },
             DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            Cart({ openCartDialog = false }, {
+            Cart(onClose = { openCartDialog = false }, onCheckout = {
                 sale.time = Instant.now()
                 scope.launch {
                     withContext(Dispatchers.IO) {
@@ -98,7 +96,14 @@ fun SalesMenu(
                     }
                 }
                 openCartDialog = false
-            }, sale)
+            }, onCheckoutError = { error ->
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        snackbarHostState.showSnackbar("Error with card checkout!: \n $error")
+                    }
+                }
+            }, sale = sale
+            )
         }
     }
 
@@ -112,15 +117,7 @@ fun SalesMenu(
                         contentDescription = "Localized description"
                     )
                 }
-            },
-            actions = {
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "Localized description"
-                    )
-                }
-            },
+            }
         )
     }, bottomBar = {
         BottomAppBar(actions = {
@@ -159,26 +156,21 @@ fun SalesMenu(
         }, containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         )
     }, snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { innerPadding ->
-        TabGallery(
-            data = data,
-            printOnClick = {
-                openPrintDialog = true
-                print = it
-            },
-            bundleOnClick = {
-                bundleClicked = true
-                bundle = it
-            },
-            bundleOnLongPress = {
-                openBundleDialog = true
-                bundle = it
-            },
-            innerPadding = innerPadding
+        TabGallery(data = data, printOnClick = {
+            openPrintDialog = true
+            print = it
+        }, bundleOnClick = {
+            bundleClicked = true
+            bundle = it
+        }, bundleOnLongPress = {
+            openBundleDialog = true
+            bundle = it
+        }, innerPadding = innerPadding
         )
 
         if (openPrintDialog) {
             BasicAlertDialog(onDismissRequest = { openPrintDialog = false }) {
-                var selectedSize by remember { mutableStateOf(Size.A3) }
+                var selectedSize by remember { mutableStateOf(print.sizes.first()) }
 
                 Surface(
                     modifier = Modifier
@@ -213,11 +205,16 @@ fun SalesMenu(
                         TextButton(
                             onClick = {
                                 openPrintDialog = false
-                                sale.prints.add(createPrintItem(print, selectedSize))
-                                sale.price += sale.prints.last().price
+                                val printIndex =
+                                    sale.prints.indexOfFirst { it.name == print.name && it.size == selectedSize && it.price == print.price[selectedSize] }
+                                if (printIndex != -1) {
+                                    sale.prints[printIndex].quantity++
+                                } else {
+                                    sale.prints.add(createPrintItem(print, selectedSize))
+                                }
+                                sale.price += print.price[selectedSize]!!
                                 refresh++
-                            },
-                            modifier = Modifier.align(Alignment.End)
+                            }, modifier = Modifier.align(Alignment.End)
                         ) {
                             Text("Confirm")
                         }
@@ -228,7 +225,8 @@ fun SalesMenu(
 
         // clicking on a bundle adds it to the cart, no dialog
         if (bundleClicked) {
-            val bundleIndex = sale.bundles.indexOfFirst { it.name == bundle.name }
+            val bundleIndex =
+                sale.bundles.indexOfFirst { it.name == bundle.name && it.price == bundle.price }
             if (bundleIndex != -1) {
                 sale.bundles[bundleIndex].quantity++
             } else {

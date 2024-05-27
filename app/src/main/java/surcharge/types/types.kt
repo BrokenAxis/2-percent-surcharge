@@ -29,7 +29,7 @@ data class Print(
 
 interface Item {
     val name: String
-    val price: Int
+    var price: Int
     var quantity: Int
 }
 

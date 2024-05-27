@@ -6,7 +6,6 @@ import androidx.compose.runtime.MutableState
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
-import io.github.cdimascio.dotenv.dotenv
 
 fun upload(image: Uri, artist: String, name: String, url: MutableState<String>, progress: MutableFloatState): String {
 
@@ -16,7 +15,7 @@ fun upload(image: Uri, artist: String, name: String, url: MutableState<String>, 
         .callback(ImgCallback(url, progress))
         .dispatch()
 
-    return ""
+    return requestId
 }
 
 class ImgCallback(private val url: MutableState<String>, private val progress: MutableFloatState) : UploadCallback {

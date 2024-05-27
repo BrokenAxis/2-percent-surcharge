@@ -20,4 +20,7 @@ interface Data {
     suspend fun getSale(saleId: UUID): Result<Sale>
     suspend fun getSales(): Result<List<Sale>>
     suspend fun addSale(sale: Sale)
+
+    suspend fun reset()
+    suspend fun reload()
 }

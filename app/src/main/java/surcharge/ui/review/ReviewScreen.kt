@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.AllInbox
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,7 +50,7 @@ import surcharge.data.prints.TempData
 import surcharge.types.Artist
 import surcharge.types.Sale
 import surcharge.utils.artistTotal
-import surcharge.utils.components.gallery.Tile
+import surcharge.utils.components.Tile
 import surcharge.utils.formatPrice
 import surcharge.utils.formatTime
 
@@ -58,12 +58,13 @@ import surcharge.utils.formatTime
 @Composable
 fun ReviewScreen(
     data: Data,
+    onNavigateToAnalytics: () -> Unit = {},
     onBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sales") },
+                title = { Text("Review Sales") },
                 navigationIcon = {
                     IconButton(onClick = { onBack() }) {
                         Icon(
@@ -71,15 +72,7 @@ fun ReviewScreen(
                             contentDescription = "Back"
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "More"
-                        )
-                    }
-                },
+                }
             )
         }
     ) { innerPadding ->
@@ -121,8 +114,6 @@ fun ReviewScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-
-
                             Text(
                                 text = artist.name,
                                 style = MaterialTheme.typography.headlineMedium
@@ -148,7 +139,6 @@ fun ReviewScreen(
                                 style = MaterialTheme.typography.displayMedium
                             )
                         }
-
                     }
                 }
             }
@@ -159,29 +149,35 @@ fun ReviewScreen(
                 icon = Icons.Filled.QueryStats
             ) {}
 
+            Tile(
+                title = "Stock",
+                subtitle = "review stock, cash on hand",
+                icon = Icons.Filled.AllInbox
+            ) {}
+
             Text("Recent Transactions", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(10.dp))
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                sales.forEach { TransactionCard(sale = it) }
+                sales.forEach { TransactionCard(sale = it, onClick = {}) }
             }
         }
-
-
     }
 }
 
 @Composable
-fun TransactionCard(sale: Sale) {
+fun TransactionCard(sale: Sale, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(bottom = 10.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        onClick = onClick
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -200,7 +196,7 @@ fun TransactionCard(sale: Sale) {
                     Spacer(Modifier.height(5.dp))
                 }
                 Text(
-                    text = "${sale.paymentType.toString()} at ${formatTime(sale.time)}",
+                    text = "${sale.paymentType} on ${formatTime(sale.time)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )

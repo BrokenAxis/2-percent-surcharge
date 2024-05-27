@@ -10,11 +10,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.Update
-import androidx.sqlite.db.SupportSQLiteDatabase
-import surcharge.data.prints.artists
-import surcharge.data.prints.bundles
-import surcharge.data.prints.prints
-import surcharge.data.prints.sales
 import surcharge.types.Artist
 import surcharge.types.Bundle
 import surcharge.types.Print
@@ -93,20 +88,9 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // Create and pre-populate the database
         private fun buildDatabase(context: Context): AppDatabase {
             return Room.databaseBuilder(context, AppDatabase::class.java, "local_data")
-                .addCallback(object : Callback() {
-                    override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-//                        newSingleThreadExecutor().execute {
-                            getInstance(context).artistDao().insert(artists)
-                            getInstance(context).printDao().insert(prints)
-                            getInstance(context).bundleDao().insert(bundles)
-                            getInstance(context).saleDao().insert(sales)
-//                        }
-                    }
-                }).fallbackToDestructiveMigration().build()
+                .fallbackToDestructiveMigration().build()
         }
     }
 }

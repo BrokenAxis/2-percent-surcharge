@@ -28,7 +28,7 @@ class MainActivity: ComponentActivity() {
             }
 
             SurchargeTheme(appContainer.theme.intValue) {
-                HomeScreen()
+                HomeScreen(appContainer)
                 SurchargeApp(appContainer)
             }
         }

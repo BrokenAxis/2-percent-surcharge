@@ -21,19 +21,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import surcharge.data.AppContainer
 
 @Composable
 fun HomeScreen(
+    app: AppContainer,
+    onNavigateToAccount: () -> Unit = {},
     onNavigateToManage: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
     onNavigateToSales: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
-
     Scaffold { innerPadding ->
         Column {
             Row(
@@ -64,6 +70,7 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Card(
+                    onClick = { onNavigateToAccount() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)
                 ) {
@@ -74,8 +81,13 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        var user by remember { mutableStateOf("User") }
+                        LaunchedEffect(true) {
+                            user = app.settings.readArtist()
+                        }
+
                         Text(
-                            "Welcome, jongjeh", style = MaterialTheme.typography.titleLarge
+                            "Welcome, $user", style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.AccountCircle, "Account")
                     }
@@ -167,8 +179,8 @@ fun HomeScreen(
     }
 }
 
-@Preview
-@Composable
-private fun Prev() {
-    HomeScreen()
-}
+//@Preview
+//@Composable
+//private fun Prev() {
+//    HomeScreen()
+//}

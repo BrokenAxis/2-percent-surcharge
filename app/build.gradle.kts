@@ -12,8 +12,8 @@ android {
         applicationId = "com.surcharge"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 5
+        versionName = "1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -105,5 +105,9 @@ dependencies {
     // gson conversion
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // datastore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // graphs
+    implementation("com.patrykandpatrick.vico:compose-m3:2.0.0-alpha.19")
 }

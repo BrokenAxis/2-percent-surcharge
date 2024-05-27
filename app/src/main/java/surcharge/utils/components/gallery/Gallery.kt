@@ -71,7 +71,7 @@ fun TabGallery(
                 Tab(
                     selected = tab.ordinal == index,
                     onClick = {
-                        tab = Tab.values()[index]
+                        tab = Tab.entries.toTypedArray()[index]
                         onSwitchTab(tab)
                     },
                     text = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
@@ -127,7 +127,7 @@ fun Gallery(
                         onClick = { printOnClick(prints[index]) },
                         colors = CardDefaults.cardColors(
                             MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                        )
+                        ),
                     ) {
                         Card { PrintImage(prints[index].url) }
 
@@ -152,7 +152,7 @@ fun Gallery(
                         Text(
                             bundles[index].name,
                             Modifier.padding(10.dp),
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }

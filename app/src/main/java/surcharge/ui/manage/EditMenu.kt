@@ -3,9 +3,6 @@ package surcharge.ui.manage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -83,20 +80,24 @@ fun EditMenu(
             onDismissRequest = { openAddBundleDialog = false },
             DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            AddBundle({ openAddBundleDialog = false }, {
-                refresh++
-                openAddBundleDialog = false
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        data.addBundle(bundle)
+            AddBundle(
+                onClose = { openAddBundleDialog = false },
+                onConfirm = {
+                    refresh++
+                    openAddBundleDialog = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            data.addBundle(bundle)
+                        }
                     }
-                }
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        snackbarHostState.showSnackbar("Bundle Added!")
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            snackbarHostState.showSnackbar("Bundle Added!")
+                        }
                     }
-                }
-            }, data, bundle
+                },
+                data = data,
+                bundle = bundle
             )
         }
     }
@@ -159,27 +160,19 @@ fun EditMenu(
                         contentDescription = "Localized description"
                     )
                 }
-            },
-            actions = {
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "Localized description"
-                    )
-                }
-            },
+            }
         )
     }, bottomBar = {
         BottomAppBar(actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")
-            }
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    Icons.Filled.Search,
-                    contentDescription = "Artist",
-                )
-            }
+//            IconButton(onClick = { /* do something */ }) {
+//                Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")
+//            }
+//            IconButton(onClick = { /* do something */ }) {
+//                Icon(
+//                    Icons.Filled.Search,
+//                    contentDescription = "Artist",
+//                )
+//            }
         }, floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {

@@ -16,7 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contrast
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,12 +46,14 @@ import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
 import surcharge.ui.theme.earth_seed
 import surcharge.ui.theme.ocean_seed
-import surcharge.utils.components.gallery.Tile
+import surcharge.utils.components.Tile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    app: AppContainer, onBack: () -> Unit
+    app: AppContainer,
+    onNavigateToDev: () -> Unit,
+    onBack: () -> Unit
 ) {
     Scaffold(topBar = {
         TopAppBar(
@@ -63,14 +65,7 @@ fun SettingsScreen(
                         contentDescription = "Back"
                     )
                 }
-            },
-            actions = {
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert, contentDescription = "More"
-                    )
-                }
-            },
+            }
         )
     }) { innerPadding ->
         Column(
@@ -79,8 +74,6 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            val horizontalScroll = rememberScrollState()
-
             var viewPersonalisation by remember { mutableStateOf(false) }
 
             if (viewPersonalisation) {
@@ -96,6 +89,11 @@ fun SettingsScreen(
                 subtitle = "Themes, memes",
                 icon = Icons.Filled.Contrast,
                 onClick = { viewPersonalisation = true })
+
+            Tile(title = "Developer Options",
+                subtitle = "Debug tools",
+                icon = Icons.Filled.DeveloperMode,
+                onClick = { onNavigateToDev() })
 
         }
 

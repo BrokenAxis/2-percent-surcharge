@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +59,7 @@ fun CashCheckout(onConfirm: () -> Unit, onDismiss: () -> Unit, total: Int) {
                 OutlinedTextField(
                     value = formatPrice(total),
                     onValueChange = {},
+                    readOnly = true,
                     label = { Text("Total Owed") },
                     placeholder = { Text("69") },
                     prefix = { Text("$") },
@@ -73,7 +73,7 @@ fun CashCheckout(onConfirm: () -> Unit, onDismiss: () -> Unit, total: Int) {
                     value = tender,
                     onValueChange = {
                         tender = it
-                        isError = !(validatePrice(tender) && intPrice(tender) > total)
+                        isError = !(validatePrice(tender) && intPrice(tender) >= total)
                         if (!isError) change =
                             formatPrice((tender.toDouble() * 100).toInt() - total)
                     },
@@ -89,12 +89,9 @@ fun CashCheckout(onConfirm: () -> Unit, onDismiss: () -> Unit, total: Int) {
                         Text(
                             when (isError) {
                                 true -> "Invalid Input"
-                                false -> ""
+                                false -> "Input amount tendered to calculate required change"
                             }
                         )
-                    },
-                    modifier = Modifier.semantics {
-                        if (isError) error("Format must be of the form 0.00")
                     }
                 )
 
@@ -107,8 +104,7 @@ fun CashCheckout(onConfirm: () -> Unit, onDismiss: () -> Unit, total: Int) {
                     leadingIcon = { Icon(Icons.Filled.PriceChange, contentDescription = "Change") },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    isError = isError,
-                    supportingText = { Text("Input amount tendered to calculate required change") }
+                    isError = isError
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

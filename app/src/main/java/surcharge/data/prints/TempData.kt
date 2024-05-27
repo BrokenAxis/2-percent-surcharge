@@ -9,61 +9,74 @@ import java.util.UUID
 // Data Interface for testing purposes
 class TempData: Data {
 
+    private var data = TestData()
+
     override suspend fun getPrint(name: String): Result<Print> {
-        return Result.success(prints.find { it.name == name }?: asa)
+        return Result.success(data.prints.find { it.name == name } ?: Print())
     }
 
     override suspend fun getPrints(): Result<List<Print>> {
-        return Result.success(prints)
+        return Result.success(data.prints)
     }
 
     override suspend fun getPrints(artist: Artist): Result<List<Print>> {
-        return Result.success(prints.filter { it.artist == artist.name })
+        return Result.success(data.prints.filter { it.artist == artist.name })
     }
 
     override suspend fun addPrint(print: Print) {
-        prints += print
+        data.prints += print
     }
 
     override suspend fun editPrint(print: Print): Boolean {
-        val index = prints.indexOfFirst { it.name == print.name }
-        prints[index].sizes = print.sizes
-        prints[index].price = print.price
+        val index = data.prints.indexOfFirst { it.name == print.name }
+        data.prints[index].sizes = print.sizes
+        data.prints[index].price = print.price
         return true
     }
 
     override suspend fun getBundles(): Result<List<Bundle>> {
-        return Result.success(bundles)
+        return Result.success(data.bundles)
     }
 
     override suspend fun editBundle(bundle: Bundle): Boolean {
-        val index = bundles.indexOfFirst { it.name == bundle.name }
-        bundles[index].prints = bundle.prints
-        bundles[index].price = bundle.price
+        val index = data.bundles.indexOfFirst { it.name == bundle.name }
+        data.bundles[index].prints = bundle.prints
+        data.bundles[index].price = bundle.price
         return true
     }
 
     override suspend fun addBundle(bundle: Bundle) {
-        bundles += bundle
+        data.bundles += bundle
     }
 
     override suspend fun getArtists(): Result<List<Artist>> {
-        return Result.success(artists)
+        return Result.success(data.artists)
     }
 
     override suspend fun addArtist(artist: Artist) {
-        artists += artist
+        data.artists += artist
     }
 
     override suspend fun getSale(saleId: UUID): Result<Sale> {
-        return Result.success(sales.find { it.saleId == saleId }?: Sale())
+        return Result.success(data.sales.find { it.saleId == saleId } ?: Sale())
     }
 
     override suspend fun getSales(): Result<List<Sale>> {
-        return Result.success(sales)
+        return Result.success(data.sales)
     }
 
     override suspend fun addSale(sale: Sale) {
-        sales += sale
+        data.sales += sale
+    }
+
+    override suspend fun reset() {
+        data.prints = listOf()
+        data.bundles = listOf()
+        data.artists = listOf()
+        data.sales = listOf()
+    }
+
+    override suspend fun reload() {
+        data = TestData()
     }
 }
