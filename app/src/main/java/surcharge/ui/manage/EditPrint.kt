@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
 import surcharge.types.Print
+import surcharge.utils.formatPrice
 import surcharge.utils.intPrice
 import surcharge.utils.validatePrice
 
@@ -67,8 +68,8 @@ fun EditPrint(
 
 
         val isError = remember { List(print.sizes.size) { false }.toMutableStateList() }
-        val prices = remember { List(print.sizes.size) { "0.00" }.toMutableStateList() }
-        val stock = remember { List(print.sizes.size) { "0" }.toMutableStateList() }
+        val prices = remember { print.price.map { formatPrice(it.value) }.toMutableStateList() }
+        val stock = remember { print.stock.map { it.value.toString() }.toMutableStateList() }
 
         prices.forEachIndexed { index, price ->
             OutlinedTextField(
@@ -117,7 +118,9 @@ fun EditPrint(
 
                 onConfirm()
             },
-            modifier = Modifier.align(Alignment.End).padding(10.dp),
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(10.dp),
             enabled = !isError.contains(true)
         ) {
             Text("Confirm")

@@ -57,19 +57,21 @@
 ## Frontend
 - Jetpack Compose
 - Async Images for loading images from url
-- dotenv for handling environment variables
+- ~~dotenv for handling environment variables~~
 
 ### To Do:
 - [x] Home Page
-- [ ] custom theme
+- [x] custom theme
 - Auth
   - [ ] everything
 - Management
   - [x] page
   - print
      - [x] add
-     - [x] edit
-     - [ ] delete
+    - [ ] edit
+      - [x] edit stock amount
+      - [ ] add / delete new sizes
+    - [x] delete
   - bundle
     - [x] add
     - [x] edit
@@ -79,19 +81,19 @@
   - [x] page
   - print
     - [x] add
-    - [ ] edit
+    - [x] edit
     - [x] delete
   - bundle
     - [x] add
-    - [ ] edit
+    - [x] edit
     - [x] delete
   - [ ] search and filter
   - [x] cart
-  - [ ] handle card payment via square 
+  - [x] handle card payment via square
 - Review
   - [x] list of sales
-  - [ ] profit breakdown by artist
-  - [ ] analytics
+  - [x] profit breakdown by artist
+  - [x] analytics
 
 ## Backend
 

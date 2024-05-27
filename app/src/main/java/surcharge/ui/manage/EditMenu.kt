@@ -1,12 +1,14 @@
 package surcharge.ui.manage
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Money
+import androidx.compose.material.icons.filled.PriceChange
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -16,9 +18,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,24 +31,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import surcharge.data.prints.Data
-import surcharge.data.prints.TempData
+import surcharge.data.AppContainer
 import surcharge.types.Bundle
 import surcharge.types.Print
+import surcharge.types.Size
 import surcharge.utils.components.gallery.Tab
 import surcharge.utils.components.gallery.TabGallery
+import surcharge.utils.formatPrice
+import surcharge.utils.intPrice
+import surcharge.utils.validatePrice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditMenu(
-    data: Data = TempData(), onBack: () -> Unit = {}
+    app: AppContainer, onBack: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -56,22 +67,27 @@ fun EditMenu(
     if (openAddPrintDialog) {
         Dialog(
             onDismissRequest = { openAddPrintDialog = false },
-            DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            AddPrint({ openAddPrintDialog = false }, {
-                openAddPrintDialog = false
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        data.addPrint(print)
+            AddPrint(
+                onClose = { openAddPrintDialog = false },
+                onConfirm = {
+                    openAddPrintDialog = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            app.data.addPrint(print)
+                        }
                     }
-                }
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        snackbarHostState.showSnackbar("Print Added!")
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            snackbarHostState.showSnackbar("Print Added!")
+                        }
                     }
-                }
-                refresh++
-            }, data, print
+                    refresh++
+                },
+                app = app,
+                snackbarHostState = snackbarHostState,
+                print = print
             )
         }
     }
@@ -83,20 +99,24 @@ fun EditMenu(
             onDismissRequest = { openAddBundleDialog = false },
             DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            AddBundle({ openAddBundleDialog = false }, {
-                refresh++
-                openAddBundleDialog = false
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        data.addBundle(bundle)
+            AddBundle(
+                onClose = { openAddBundleDialog = false },
+                onConfirm = {
+                    refresh++
+                    openAddBundleDialog = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            app.data.addBundle(bundle)
+                        }
                     }
-                }
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        snackbarHostState.showSnackbar("Bundle Added!")
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            snackbarHostState.showSnackbar("Bundle Added!")
+                        }
                     }
-                }
-            }, data, bundle
+                },
+                data = app.data,
+                bundle = bundle
             )
         }
     }
@@ -105,22 +125,30 @@ fun EditMenu(
     if (viewPrint) {
         Dialog(
             onDismissRequest = { viewPrint = false },
-            DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ViewPrint({ viewPrint = false }, {
-                refresh++
-                viewPrint = false
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        data.editPrint(print)
+            ViewPrint(
+                onClose = { viewPrint = false },
+                onEdit = {
+                    refresh++
+                    viewPrint = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            app.data.editPrint(print)
+                        }
                     }
-                }
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        snackbarHostState.showSnackbar("Print Edited!")
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            snackbarHostState.showSnackbar("Print Edited!")
+                        }
                     }
-                }
-            }, data, print
+                },
+                onArchive = {
+                    refresh++
+                    viewPrint = false
+                },
+                data = app.data,
+                print = print
             )
         }
     }
@@ -129,95 +157,219 @@ fun EditMenu(
     if (viewBundle) {
         Dialog(
             onDismissRequest = { viewBundle = false },
-            DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ViewBundle({ viewBundle = false }, {
-                refresh++
-                viewBundle = false
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        data.editBundle(bundle)
+            ViewBundle(
+                onClose = { viewBundle = false },
+                onEdit = {
+                    refresh++
+                    viewBundle = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            app.data.editBundle(bundle)
+                        }
                     }
-                }
-                scope.launch {
-                    withContext(Dispatchers.IO) {
-                        snackbarHostState.showSnackbar("Bundle Edited!")
-                    }
-                }
-            }, data, bundle
-            )
-        }
-    }
-
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text("Edit Products") },
-            navigationIcon = {
-                IconButton(onClick = { onBack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Localized description"
-                    )
-                }
-            },
-            actions = {
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "Localized description"
-                    )
-                }
-            },
-        )
-    }, bottomBar = {
-        BottomAppBar(actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")
-            }
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    Icons.Filled.Search,
-                    contentDescription = "Artist",
-                )
-            }
-        }, floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    when (tab) {
-                        Tab.Print -> openAddPrintDialog = true
-                        Tab.Bundle -> openAddBundleDialog = true
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            snackbarHostState.showSnackbar("Bundle Edited!")
+                        }
                     }
                 },
-            ) {
-                Icon(Icons.Filled.Add, "Add Print")
-                Text(
-                    text = when (tab) {
-                        Tab.Print -> "Add Print"
-                        Tab.Bundle -> "Add Bundle"
-                    }
+                onArchive = {
+                    refresh++
+                    viewBundle = false
+                },
+                data = app.data,
+                bundle = bundle
+            )
+        }
+    }
+
+    var viewCash by remember { mutableStateOf(false) }
+    if (viewCash) {
+        Dialog(onDismissRequest = { viewCash = false }) {
+            ElevatedCard {
+                var cash by remember { mutableStateOf("") }
+                LaunchedEffect(true) {
+                    withContext(Dispatchers.IO) { cash = formatPrice(app.settings.readCash()) }
+                }
+
+                TextField(
+                    value = cash,
+                    onValueChange = {
+                        if (validatePrice(it)) {
+                            cash = it
+                        }
+                    },
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .align(Alignment.CenterHorizontally),
+                    label = { Text("Cash On Hand") },
+                    prefix = { Text("$ ") },
+                    supportingText = { Text("Update amount") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
+
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                app.settings.updateCash(intPrice(cash))
+                            }
+                        }
+                        viewCash = false
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Confirm")
+                }
             }
-        }, containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-        )
-    }, snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { innerPadding ->
+        }
+    }
+
+    var viewDefaultPrice by remember { mutableStateOf(false) }
+    if (viewDefaultPrice) {
+        Dialog(
+            onDismissRequest = { viewDefaultPrice = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ElevatedCard {
+                Text(
+                    text = "Default Print Prices",
+                    modifier = Modifier.padding(10.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                val sizes = Size.entries.toTypedArray()
+                val prices = remember { List(sizes.size) { formatPrice(0) }.toMutableStateList() }
+                LaunchedEffect(true) {
+                    withContext(Dispatchers.IO) {
+                        val default =
+                            app.settings.readDefaultPrices().mapValues { formatPrice(it.value) }
+                        default.forEach { prices[it.key.ordinal] = it.value }
+                    }
+                }
+
+                val isError = remember { List(Size.entries.size) { false }.toMutableStateList() }
+
+                prices.forEachIndexed { index, price ->
+                    TextField(
+                        value = prices[index],
+                        onValueChange = {
+                            prices[index] = it
+                            isError[index] = !validatePrice(it)
+                        },
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .align(Alignment.CenterHorizontally),
+                        label = { Text(sizes[index].name) },
+                        prefix = { Text("$ ") },
+                        supportingText = { Text("Update amount") },
+                        isError = isError[index],
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
+
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                val success =
+                                    app.settings.updateDefaultPrices(prices.map { intPrice(it) }
+                                        .mapIndexed { index, price -> sizes[index] to price }
+                                        .toMap())
+
+                                snackbarHostState.showSnackbar(success.toString())
+                            }
+                        }
+                        viewDefaultPrice = false
+                    },
+                    modifier = Modifier.align(Alignment.End),
+                    enabled = !isError.contains(true)
+                ) {
+                    Text("Confirm")
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Products") },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            BottomAppBar(
+                actions = {
+                    IconButton(onClick = { viewCash = true }) {
+                        Icon(Icons.Filled.Money, "Cash On Hand")
+                    }
+                    IconButton(onClick = { viewDefaultPrice = true }) {
+                        Icon(Icons.Filled.PriceChange, "Change Default Price")
+                    }
+//            IconButton(onClick = { /* do something */ }) {
+//                Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")
+//            }
+//            IconButton(onClick = { /* do something */ }) {
+//                Icon(
+//                    Icons.Filled.Search,
+//                    contentDescription = "Artist",
+//                )
+//            }
+                },
+                floatingActionButton = {
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            when (tab) {
+                                Tab.Print -> openAddPrintDialog = true
+                                Tab.Bundle -> openAddBundleDialog = true
+                            }
+                        },
+                    ) {
+                        Icon(Icons.Filled.Add, "Add Print")
+                        Text(
+                            text = when (tab) {
+                                Tab.Print -> "Add Print"
+                                Tab.Bundle -> "Add Bundle"
+                            }
+                        )
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+            )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { innerPadding ->
         key(refresh) {
-            TabGallery(data, onSwitchTab = {
-                tab = it
-            }, printOnClick = {
-                print = it
-                viewPrint = true
-            }, bundleOnClick = {
-                bundle = it
-                viewBundle = true
-            }, innerPadding = innerPadding
+            TabGallery(
+                data = app.data,
+                onSwitchTab = {
+                    tab = it
+                },
+                printOnClick = {
+                    print = it
+                    viewPrint = true
+                },
+                bundleOnClick = {
+                    bundle = it
+                    viewBundle = true
+                },
+                innerPadding = innerPadding
             )
         }
     }
 }
 
 
-@Preview(showBackground = true)
-@Composable
-private fun Prev() {
-    EditMenu()
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun Prev() {
+//    EditMenu()
+//}

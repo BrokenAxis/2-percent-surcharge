@@ -5,11 +5,14 @@ import androidx.navigation.NavHostController
 
 object SurchargeDestinations {
     const val HOME_ROUTE = "home"
+    const val ACCOUNT_ROUTE = "account"
     const val MANAGE_SHOP_ROUTE = "manage"
     const val SHOP_ROUTE = "shop"
-    const val SALES_ROUTE = "sales"
+    const val REVIEW_ROUTE = "review"
+    const val ANALYTICS_ROUTE = "review/analytics"
     const val CART = "cart/{a}"
     const val SETTINGS_ROUTE = "settings"
+    const val DEV_ROUTE = "settings/dev"
 }
 
 class SurchargeNavigationActions(navController: NavHostController) {
@@ -22,6 +25,17 @@ class SurchargeNavigationActions(navController: NavHostController) {
             restoreState = true
         }
     }
+
+    val navigateToAccount: () -> Unit = {
+        navController.navigate(SurchargeDestinations.ACCOUNT_ROUTE) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     val navigateToManageShop: () -> Unit = {
         navController.navigate(SurchargeDestinations.MANAGE_SHOP_ROUTE) {
             popUpTo(navController.graph.findStartDestination().id) {
@@ -42,8 +56,18 @@ class SurchargeNavigationActions(navController: NavHostController) {
         }
     }
 
-    val navigateToSales: () -> Unit = {
-        navController.navigate(SurchargeDestinations.SALES_ROUTE) {
+    val navigateToReview: () -> Unit = {
+        navController.navigate(SurchargeDestinations.REVIEW_ROUTE) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    val navigateToAnalytics: () -> Unit = {
+        navController.navigate(SurchargeDestinations.ANALYTICS_ROUTE) {
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
@@ -54,6 +78,16 @@ class SurchargeNavigationActions(navController: NavHostController) {
 
     val navigateToSettings: () -> Unit = {
         navController.navigate(SurchargeDestinations.SETTINGS_ROUTE) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    val navigateToDev: () -> Unit = {
+        navController.navigate(SurchargeDestinations.DEV_ROUTE) {
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }

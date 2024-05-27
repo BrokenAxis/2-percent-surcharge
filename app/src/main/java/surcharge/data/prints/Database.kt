@@ -12,14 +12,6 @@ class LocalData(appContext: Context): Data {
 
     private val db = AppDatabase.getInstance(appContext)
 
-//    init {
-//        Executors.newSingleThreadExecutor().execute {
-//            db.artistDao().insert(artists)
-//            db.printDao().insert(prints)
-//            db.bundleDao().insert(bundles)
-//            db.saleDao().insert(sales)
-//        }
-//    }
     override suspend fun getPrint(name: String): Result<Print> = runCatching {
         db.printDao().getByName(name)
     }
@@ -40,12 +32,24 @@ class LocalData(appContext: Context): Data {
         return db.printDao().update(print) == 1
     }
 
+    override suspend fun deletePrint(print: Print): Boolean {
+        return db.printDao().delete(print) == 0
+    }
+
+    override suspend fun getBundle(name: String): Result<Bundle> = runCatching {
+        db.bundleDao().getByName(name)
+    }
+
     override suspend fun getBundles(): Result<List<Bundle>> = runCatching {
         db.bundleDao().getAll()
     }
 
     override suspend fun editBundle(bundle: Bundle): Boolean {
         return db.bundleDao().update(bundle) == 1
+    }
+
+    override suspend fun deleteBundle(bundle: Bundle): Boolean {
+        return db.bundleDao().delete(bundle) == 1
     }
 
     override suspend fun addBundle(bundle: Bundle) {
@@ -60,19 +64,41 @@ class LocalData(appContext: Context): Data {
         db.artistDao().insert(artist)
     }
 
+    override suspend fun deleteArtist(artist: Artist): Boolean {
+        return db.artistDao().delete(artist) == 1
+    }
+
     override suspend fun getSale(saleId: UUID): Result<Sale> = runCatching {
         db.saleDao().getById(saleId)
     }
 
-//    override suspend fun getSales(): Result<List<Sale>> = runCatching {
-//        db.saleDao().getAll()
-//    }
-
-    override suspend fun getSales(): Result<List<Sale>> {
-        return Result.success(db.saleDao().getAll())
+    override suspend fun getSales(): Result<List<Sale>> = runCatching {
+        db.saleDao().getAll()
     }
 
     override suspend fun addSale(sale: Sale) {
         db.saleDao().insert(sale)
+    }
+
+    override suspend fun deleteSale(sale: Sale): Boolean {
+        return db.saleDao().delete(sale) == 1
+    }
+
+    override suspend fun reset() {
+        db.clearAllTables()
+    }
+
+    override suspend fun reload() {
+        reset()
+
+        val data = TestData()
+        db.printDao().insert(data.prints)
+        db.bundleDao().insert(data.bundles)
+        db.artistDao().insert(data.artists)
+        db.saleDao().insert(data.sales)
+    }
+
+    fun close() {
+        db.close()
     }
 }

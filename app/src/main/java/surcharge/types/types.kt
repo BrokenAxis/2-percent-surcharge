@@ -29,7 +29,7 @@ data class Print(
 
 interface Item {
     val name: String
-    val price: Int
+    var price: Int
     var quantity: Int
 }
 
@@ -61,6 +61,8 @@ enum class Size {
     A3,
     THICC
 }
+
+val emptyPriceMap = mapOf(Size.A3 to 0, Size.A4 to 0, Size.A5 to 0, Size.THICC to 0)
 
 @Entity
 data class Bundle(

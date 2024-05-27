@@ -11,6 +11,7 @@ interface AppContainer {
     val data: Data
     val settings: SettingsDataStore
     var theme: MutableIntState
+    val squareId: String
 }
 
 class AppContainerImpl(private val applicationContext: Context): AppContainer {
@@ -24,4 +25,6 @@ class AppContainerImpl(private val applicationContext: Context): AppContainer {
     }
 
     override var theme = mutableIntStateOf(0)
+
+    override val squareId = "sq0idp--wEAx5MHVuY-EM0d196JsQ"
 }

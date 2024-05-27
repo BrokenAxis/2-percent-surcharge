@@ -33,4 +33,4 @@ google-services.json
 *.hprof
 
 # secrets
-env
+app/src/main/java/surcharge/data/env.kt

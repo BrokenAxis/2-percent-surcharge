@@ -1,64 +1,96 @@
 package surcharge.ui.pointOfSale
 
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.ShoppingCartCheckout
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.text.isDigitsOnly
 import com.squareup.sdk.pos.PosClient
-import com.squareup.sdk.pos.PosSdk
-import io.github.cdimascio.dotenv.dotenv
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import surcharge.data.AppContainer
+import surcharge.types.Bundle
+import surcharge.types.Item
 import surcharge.types.PaymentType
+import surcharge.types.Print
+import surcharge.types.PrintItem
 import surcharge.types.Sale
 import surcharge.utils.formatPrice
+import surcharge.utils.intPrice
+import surcharge.utils.validatePrice
+import kotlin.math.ceil
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Cart(
-    onClose: () -> Unit, onCheckout: () -> Unit, sale: Sale
+    onClose: () -> Unit,
+    onCheckout: () -> Unit,
+    onCheckoutError: (error: String) -> Unit,
+    posClient: PosClient,
+    sale: Sale,
+    app: AppContainer
 ) {
+    val scope = rememberCoroutineScope()
     var cashCheckout by remember { mutableStateOf(false) }
-    var onResult by remember { mutableStateOf(false) }
-    var result: ActivityResult? = null
-
+    var total by remember { mutableIntStateOf(sale.prints.sumOf { it.price * it.quantity } + sale.bundles.sumOf { it.price * it.quantity }) }
     if (cashCheckout) {
-        CashCheckout(onConfirm = {
-            cashCheckout = false
-            onCheckout()
-        }, onDismiss = { cashCheckout = false }, total = sale.price
-        )
+        key(total) {
+            CashCheckout(onConfirm = {
+                cashCheckout = false
+                sale.price = total
+
+                scope.launch {
+                    withContext(IO) {
+                        app.settings.updateCash(app.settings.readCash() + total)
+                    }
+                }
+
+                onCheckout()
+            }, onDismiss = { cashCheckout = false }, total = total
+            )
+        }
     }
 
     ElevatedCard(
@@ -68,8 +100,25 @@ fun Cart(
             .fillMaxSize()
             .padding(10.dp)
     ) {
+        var editItem by remember { mutableStateOf(false) }
+        var selectedItem: Item by remember {
+            mutableStateOf(PrintItem())
+        }
+
+        if (editItem) {
+            val originalPrice by remember { mutableIntStateOf(selectedItem.price) }
+            EditDialog(
+                app = app,
+                item = selectedItem,
+                onDismissRequest = {
+                    total += (selectedItem.price - originalPrice) * selectedItem.quantity
+                    editItem = false
+                }
+            )
+        }
+
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(20.dp)) {
-            Icon(Icons.Filled.AttachMoney, "Cart")
+            Icon(Icons.Filled.ShoppingCart, "Cart")
             Text(
                 text = "Cart",
                 style = MaterialTheme.typography.headlineMedium,
@@ -82,8 +131,6 @@ fun Cart(
         }
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
 
-        var total by remember { mutableIntStateOf(sale.prints.sumOf { it.price * it.quantity } + sale.bundles.sumOf { it.price * it.quantity }) }
-
         key(total) {
             sale.bundles.forEach { item ->
                 val itemTotal = item.price * item.quantity
@@ -91,7 +138,12 @@ fun Cart(
                 Row(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .clickable {
+                            selectedItem = item
+                            editItem = true
+                        }
                 ) {
                     IconButton(onClick = {
                         sale.bundles.remove(item)
@@ -104,24 +156,36 @@ fun Cart(
                             MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Column {
+                        Row {
+                            Text(
+                                text = "${item.quantity}x ${item.name}",
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Spacer(Modifier.weight(1f))
+                            Text(
+                                "$ ${formatPrice(itemTotal)}",
+                                modifier = Modifier.padding(start = 10.dp, bottom = 10.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        item.prints.forEach { print ->
+                            Text(
+                                text = "${print.quantity}x ${print.name}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(start = 10.dp, bottom = 5.dp),
+                            )
+                        }
+                    }
 
-                    Text(
-                        text = "${item.quantity}x ${item.name}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(10.dp),
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        "$ ${formatPrice(itemTotal)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+
                 }
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
-
             }
 
             sale.prints.forEach { item ->
@@ -130,7 +194,12 @@ fun Cart(
                 Row(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .clickable {
+                            selectedItem = item
+                            editItem = true
+                        }
                 ) {
                     IconButton(onClick = {
                         sale.prints.remove(item)
@@ -160,10 +229,8 @@ fun Cart(
                     color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
-
             }
         }
-
 
         Spacer(Modifier.weight(1f))
 
@@ -195,59 +262,167 @@ fun Cart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TOTAL:",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "Total:",
+                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(20.dp),
                     color = MaterialTheme.colorScheme.onSecondary
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    "$ ${formatPrice(total)}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                val dotenv = dotenv {
-                    directory = "/assets"
-                    filename = "env" // instead of '.env', use 'env'
+                when (selectedIndex) {
+                    PaymentType.CASH -> {
+                        Text(
+                            "$ ${formatPrice(total)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+
+                    PaymentType.CARD -> {
+                        Text(
+                            "$ ${formatPrice(ceil(total.toDouble() * 1.02).toInt())}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
 
-                val applicationId = dotenv["APPLICATION_ID"]
-                val posClient = PosSdk.createClient(LocalContext.current, applicationId)
                 val launcher =
-                    rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult(),
-                        onResult = {
-                            result = it
-                            onResult = true
-                        })
+                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                        onCardCheckoutResult(sale, it, posClient, onCheckout, onCheckoutError)
+                    }
 
                 FloatingActionButton(onClick = {
                     if (total != 0) {
+                        sale.price = total
+                        sale.paymentType = selectedIndex
                         when (selectedIndex) {
                             PaymentType.CASH -> cashCheckout = true
-                            PaymentType.CARD -> handleCardCheckout(total, posClient, launcher)
+                            PaymentType.CARD -> handleCardCheckout(
+                                (total.toDouble() * 1.02).toInt(),
+                                posClient,
+                                launcher,
+                                onCheckoutError
+                            )
                         }
                     }
-
                 }, modifier = Modifier.padding(30.dp)) {
                     Icon(Icons.Filled.ShoppingCartCheckout, "Checkout")
                 }
-
-                if (onResult) result?.let { OnCardCheckoutResult(it, posClient) }
             }
         }
     }
 }
 
 @Composable
-fun OnCardCheckoutResult(result: ActivityResult, posClient: PosClient) {
-    val error = posClient.parseChargeError(result.data!!)
-    error.code
-    error.debugDescription
+fun EditDialog(
+    app: AppContainer,
+    item: Item,
+    onDismissRequest: () -> Unit,
+) {
+    var original by remember { mutableIntStateOf(item.price) }
+    var percentage by remember { mutableIntStateOf(0) }
+    var discounted by remember { mutableStateOf(formatPrice(item.price)) }
+    LaunchedEffect(item) {
+        withContext(IO) {
+            app.data.getPrint(item.name).getOrElse { Print() }
+            original = if (item is PrintItem) {
+                app.data.getPrint(item.name)
+                    .getOrElse { Print(price = mutableMapOf(item.size to 0)) }.price[item.size] ?: 0
+            } else {
+                app.data.getBundle(item.name).getOrElse { Bundle() }.price
+            }
+            percentage =
+                ceil((((original - intPrice(discounted)).toDouble() / original.toDouble()) * 100)).toInt()
+        }
+    }
+
+    Dialog(onDismissRequest = onDismissRequest) {
+        ElevatedCard {
+            Column(modifier = Modifier.padding(20.dp)) {
+
+                OutlinedTextField(
+                    value = formatPrice(original),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Original Price") },
+                    prefix = { Text("$ ") }
+                )
+
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
+
+                var isError by remember { mutableStateOf(false) }
+                TextField(
+                    value = discounted,
+                    onValueChange = {
+                        discounted = it
+                        isError = !validatePrice(discounted)
+                        if (!isError) {
+                            percentage =
+                                ceil((((original - intPrice(discounted)).toDouble() / original.toDouble()) * 100)).toInt()
+                        }
+                    },
+                    label = { Text("Discounted Price") },
+                    prefix = { Text("$ ") },
+                    isError = isError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                TextField(
+                    value = percentage.toString(),
+                    onValueChange = {
+                        if (it.isNotEmpty() && it.isDigitsOnly()) percentage = it.toInt()
+                        isError = !(it.isNotEmpty() && it.isDigitsOnly() && it.toInt() <= 100)
+                        if (!isError) {
+                            discounted =
+                                formatPrice((((100 - percentage.toDouble()) / 100) * original.toDouble()).toInt())
+                        }
+                    },
+                    label = { Text("Percentage Discount") },
+                    suffix = { Text("% off") },
+                    supportingText = { Text("Apply a flat or percentage discount") },
+                    isError = isError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                TextButton(
+                    onClick = {
+                        item.price = intPrice(discounted)
+                        onDismissRequest()
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Confirm")
+                }
+            }
+        }
+    }
 }
 
-@Preview
-@Composable
-private fun Prev() {
-    Cart({}, {}, Sale())
+fun onCardCheckoutResult(
+    sale: Sale,
+    result: ActivityResult,
+    posClient: PosClient,
+    onCheckout: () -> Unit,
+    onCheckoutError: (error: String) -> Unit
+) {
 
+    if (result.resultCode == Activity.RESULT_OK) {
+        val success = posClient.parseChargeSuccess(result.data!!)
+        sale.comment = success.requestMetadata.toString()
+        onCheckout()
+    } else {
+        val error = posClient.parseChargeError(result.data!!)
+        onCheckoutError(error.debugDescription)
+    }
 }
+
+//@Preview
+//@Composable
+//private fun Prev() {
+//    Cart({}, {}, {}, Sale())
+//
+//}

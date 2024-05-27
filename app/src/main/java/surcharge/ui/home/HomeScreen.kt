@@ -3,6 +3,7 @@ package surcharge.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,49 +22,60 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import surcharge.data.AppContainer
+import surcharge.utils.debounce.debounced
 
 @Composable
 fun HomeScreen(
+    app: AppContainer,
+    onNavigateToAccount: () -> Unit = {},
     onNavigateToManage: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
     onNavigateToSales: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
-
     Scaffold { innerPadding ->
-        Column {
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(start = 10.dp, top = 10.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Row(
                 modifier = Modifier
-                    .padding(innerPadding)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     "Surcharge",
                     style = MaterialTheme.typography.displayLarge,
-                    modifier = Modifier.padding(20.dp, 30.dp)
                 )
                 IconButton(
-                    onClick = { onNavigateToSettings() },
-                    modifier = Modifier.padding(10.dp)
+                    onClick = debounced { onNavigateToSettings() },
+                    modifier = Modifier.align(Alignment.Top)
                 ) {
                     Icon(Icons.Filled.Settings, "Settings")
                 }
             }
 
+            Spacer(Modifier.weight(0.5f))
+
             Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(horizontal = 20.dp)
-                    .fillMaxSize(),
+                modifier = Modifier.padding(horizontal = 15.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Card(
+                    onClick = debounced { onNavigateToAccount() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)
                 ) {
@@ -74,101 +86,83 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        var user by remember { mutableStateOf("User") }
+                        LaunchedEffect(true) {
+                            user = app.settings.readArtist()
+                        }
+
                         Text(
-                            "Welcome, jongjeh", style = MaterialTheme.typography.titleLarge
+                            "Welcome, $user", style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.AccountCircle, "Account")
                     }
                 }
-                Card(
-                    onClick = { onNavigateToManage() },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Manage Shop", Modifier, style = MaterialTheme.typography.titleLarge
-                        )
-                        Icon(Icons.Filled.Inventory, "Manage Shop")
-                    }
-                    Text(
-                        "Add new prints or edit existing ones. Update stock, sizes and price. Create discounts and bundles.",
-                        Modifier.padding(20.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Page(
+                    onNavigateToPage = onNavigateToManage,
+                    title = "Manage Shop",
+                    icon = Icons.Filled.Inventory,
+                    description = "Add new prints or edit existing ones. Update stock, sizes and price. Create discounts and bundles."
+                )
 
-                Card(
-                    onClick = { onNavigateToShop() },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Point of Sale", Modifier, style = MaterialTheme.typography.titleLarge
-                        )
-                        Icon(Icons.Filled.PointOfSale, "Point of Sale")
-                    }
-                    Text(
-                        "Select prints and bundles for a sale. Manually add discounts or comments. Processes card payments with Square.",
-                        Modifier.padding(20.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Page(
+                    onNavigateToPage = onNavigateToShop,
+                    title = "Point of Sale",
+                    icon = Icons.Filled.PointOfSale,
+                    description = "Select prints and bundles for a sale. Manually add discounts or comments. Processes card payments with Square."
+                )
 
-                Card(
-                    onClick = { onNavigateToSales() },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        MaterialTheme.colorScheme.surfaceColorAtElevation(
-                            2.dp
-                        )
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Review Sales", Modifier, style = MaterialTheme.typography.titleLarge
-                        )
-                        Icon(Icons.Filled.Savings, "Review Sales")
-                    }
-                    Text(
-                        "See sales history, income breakdown by artist and analytics",
-                        Modifier.padding(20.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Page(
+                    onNavigateToPage = onNavigateToSales,
+                    title = "Review Sales",
+                    icon = Icons.Filled.Savings,
+                    description = "See sales history, income breakdown by artist and analytics"
+                )
             }
-
         }
+    }
 
+}
 
+@Composable
+fun Page(
+    onNavigateToPage: () -> Unit,
+    title: String,
+    icon: ImageVector,
+    description: String
+) {
+    Card(
+        onClick = debounced { onNavigateToPage() },
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Icon(
+                imageVector = icon,
+                contentDescription = ""
+            )
+        }
+        Text(
+            text = description,
+            modifier = Modifier.padding(20.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
-@Preview
-@Composable
-private fun Prev() {
-    HomeScreen()
-}
+//@Preview
+//@Composable
+//private fun Prev() {
+//    HomeScreen()
+//}
