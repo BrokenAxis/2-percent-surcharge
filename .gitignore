@@ -16,7 +16,7 @@ captures/
 output.json
 
 # Releases
-release/
+/app/release/
 
 # IntelliJ
 *.iml
