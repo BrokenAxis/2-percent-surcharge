@@ -59,3 +59,22 @@ fun artistTotal(sales: List<Sale>, artist: Artist): Int {
         }
     }
 }
+
+/**
+ * Split sales by using total sale amount rather than considering bundle discounts separately
+ */
+fun altArtistTotal(sales: List<Sale>, artist: Artist): Int {
+    return sales.sumOf { sale ->
+        val artistEarningsInSale = sale.prints.filter { it.artist == artist.name }
+            .sumOf { it.price * it.quantity } +
+                sale.bundles.sumOf { bundle ->
+                    bundle.prints.filter { it.artist == artist.name }
+                        .sumOf { it.quantity * it.price }
+                }
+        val totalSaleValue = sale.prints.sumOf { it.price * it.quantity } +
+                sale.bundles.sumOf { bundle ->
+                    bundle.prints.sumOf { it.price * it.quantity }
+                }
+        ((artistEarningsInSale.toDouble() / totalSaleValue) * sale.price).toInt()
+    }
+}

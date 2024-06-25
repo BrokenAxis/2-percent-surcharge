@@ -9,18 +9,35 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.first
-import surcharge.data.SQUARE_ID
 import surcharge.types.Size
 import surcharge.types.emptyPriceMap
+import surcharge.utils.retrofit.Location
+import surcharge.utils.retrofit.Token
+import surcharge.utils.retrofit.generateCsrfToken
+import java.util.UUID
 
 class SettingsDataStore(private val context: Context) {
     private val Context.dataStore by preferencesDataStore(name = "settings")
+    private val uniqueIdKey = stringPreferencesKey("UUID")
     private val themeKey = intPreferencesKey("theme")
+    private val squareAccessTokenKey = stringPreferencesKey("squareAccessToken")
     private val artistKey = stringPreferencesKey("artist")
-    private val squareKey = stringPreferencesKey("square")
     private val cashKey = intPreferencesKey("cash")
     private val discountKey = booleanPreferencesKey("discount")
     private val defaultPricesKey = stringPreferencesKey("defaultPrices")
+    private val intentKey = stringPreferencesKey("intent")
+    private val csrfKey = stringPreferencesKey("csrf")
+    private val locationKey = stringPreferencesKey("location")
+    private val alternateSaleKey = booleanPreferencesKey("alternateSale")
+
+    suspend fun readUniqueId(): String {
+        if (context.dataStore.data.first()[uniqueIdKey] == null) {
+            context.dataStore.edit { preferences ->
+                preferences[uniqueIdKey] = UUID.randomUUID().toString()
+            }
+        }
+        return context.dataStore.data.first()[uniqueIdKey]!!
+    }
 
     suspend fun readTheme(): Int {
         return context.dataStore.data.first()[themeKey] ?: 0
@@ -33,7 +50,7 @@ class SettingsDataStore(private val context: Context) {
     }
 
     suspend fun readArtist(): String {
-        return context.dataStore.data.first()[artistKey] ?: ""
+        return context.dataStore.data.first()[artistKey] ?: "User"
     }
 
     suspend fun updateArtist(artist: String) {
@@ -42,14 +59,18 @@ class SettingsDataStore(private val context: Context) {
         }
     }
 
-    suspend fun readSquareID(): String {
-        return context.dataStore.data.first()[squareKey] ?: SQUARE_ID
+    suspend fun readSquareAccessToken(): Token {
+        val type = object : TypeToken<Token>() {}.type
+        val squareAccessToken =
+            context.dataStore.data.first()[squareAccessTokenKey] ?: return Token()
+        return Gson().fromJson(squareAccessToken, type)
     }
 
-    suspend fun updateSquareID(id: String) {
+    suspend fun updateSquareAccessToken(accessToken: Token): Boolean {
         context.dataStore.edit { preferences ->
-            preferences[squareKey] = id
+            preferences[squareAccessTokenKey] = Gson().toJson(accessToken)
         }
+        return true
     }
 
     suspend fun readCash(): Int {
@@ -86,5 +107,48 @@ class SettingsDataStore(private val context: Context) {
             return true
         }
         return false
+    }
+
+    suspend fun updateIntent(intent: String) {
+        context.dataStore.edit { preferences ->
+            preferences[intentKey] = intent
+        }
+    }
+
+    suspend fun readIntent(): String {
+        return context.dataStore.data.first()[intentKey] ?: ""
+    }
+
+    suspend fun refreshCsrf() {
+        context.dataStore.edit { preferences ->
+            preferences[csrfKey] = generateCsrfToken()
+        }
+    }
+
+    suspend fun readCsrf(): String {
+        return context.dataStore.data.first()[csrfKey] ?: ""
+    }
+
+    suspend fun readLocation(): Location {
+        val type = object : TypeToken<Location>() {}.type
+        val location = context.dataStore.data.first()[locationKey]
+            ?: return Location(locationName = "Location")
+        return Gson().fromJson(location, type)
+    }
+
+    suspend fun updateLocation(location: Location) {
+        context.dataStore.edit { preferences ->
+            preferences[locationKey] = Gson().toJson(location)
+        }
+    }
+
+    suspend fun readAlternateSale(): Boolean {
+        return context.dataStore.data.first()[alternateSaleKey] ?: false
+    }
+
+    suspend fun updateAlternateSale(alternateSale: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[alternateSaleKey] = alternateSale
+        }
     }
 }

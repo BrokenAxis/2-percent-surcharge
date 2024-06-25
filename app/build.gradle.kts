@@ -12,8 +12,8 @@ android {
         applicationId = "com.surcharge"
         minSdk = 30
         targetSdk = 34
-        versionCode = 12
-        versionName = "1.11"
+        versionCode = 33
+        versionName = "1.32"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -25,6 +25,9 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     compileOptions {
@@ -60,6 +63,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(platform("androidx.compose:compose-bom:2024.05.00"))
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.6.8")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -111,4 +115,8 @@ dependencies {
 
     // graphs
     implementation("com.patrykandpatrick.vico:compose-m3:2.0.0-alpha.19")
+
+    // https
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 }

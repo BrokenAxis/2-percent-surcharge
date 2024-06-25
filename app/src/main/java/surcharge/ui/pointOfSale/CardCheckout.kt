@@ -1,29 +1,35 @@
 package surcharge.ui.pointOfSale
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.result.ActivityResult
-import com.squareup.sdk.pos.ChargeRequest
-import com.squareup.sdk.pos.CurrencyCode
-import com.squareup.sdk.pos.PosClient
+import com.squareup.sdk.mobilepayments.MobilePaymentsSdk
+import com.squareup.sdk.mobilepayments.core.Result
+import com.squareup.sdk.mobilepayments.payment.CurrencyCode
+import com.squareup.sdk.mobilepayments.payment.Money
+import com.squareup.sdk.mobilepayments.payment.Payment
+import com.squareup.sdk.mobilepayments.payment.PaymentParameters
+import com.squareup.sdk.mobilepayments.payment.PromptParameters
+import java.util.UUID
 
 fun handleCardCheckout(
     total: Int,
-    posClient: PosClient,
-    launcher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+    saleId: UUID,
+    onSuccess: (Payment?) -> Unit,
     onError: (String) -> Unit
 ) {
-    val request = ChargeRequest.Builder(
-        total,
-        CurrencyCode.AUD
+    val paymentManager = MobilePaymentsSdk.paymentManager()
+    val paymentParameters = PaymentParameters.Builder(
+        amount = Money(total.toLong(), CurrencyCode.AUD),
+        idempotencyKey = UUID.randomUUID().toString() // todo store this
     )
+        .referenceId(saleId.toString())
         .build()
-    try {
-        val intent: Intent = posClient.createChargeIntent(request)
-        launcher.launch(intent)
-    } catch (e: ActivityNotFoundException) {
-        onError(e.localizedMessage ?: "")
+    val paymentHandle = paymentManager.startPaymentActivity(
+        paymentParameters = paymentParameters,
+        promptParameters = PromptParameters()
+    ) { result ->
+        when (result) {
+            is Result.Success -> onSuccess(result.value)
+            is Result.Failure -> onError(result.errorMessage)
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import com.cloudinary.android.MediaManager
 import com.squareup.sdk.mobilepayments.MobilePaymentsSdk
 import surcharge.data.AppContainer
 import surcharge.data.AppContainerImpl
+import surcharge.data.SQUARE_ID
 
 class SurchargeApplication : Application() {
 //    companion object {
@@ -17,8 +18,7 @@ class SurchargeApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MediaManager.init(this)
+        MobilePaymentsSdk.initialize(SQUARE_ID, this)
         container = AppContainerImpl(this)
-
-        MobilePaymentsSdk.initialize(container.squareId, this)
     }
 }

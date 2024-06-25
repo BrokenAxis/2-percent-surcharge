@@ -20,7 +20,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Tile(
-    title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    switch: @Composable () -> Unit = {}
 ) {
     Card(
         onClick = onClick,
@@ -28,7 +32,7 @@ fun Tile(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
+            modifier = Modifier.padding(start = 20.dp, top = 15.dp, end = 50.dp, bottom = 15.dp),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -45,6 +49,7 @@ fun Tile(
                     Text(text = subtitle, style = MaterialTheme.typography.bodyMedium)
                 }
             }
+            switch()
         }
 
     }

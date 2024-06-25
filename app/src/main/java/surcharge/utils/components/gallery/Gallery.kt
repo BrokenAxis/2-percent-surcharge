@@ -51,7 +51,7 @@ import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.prints.Data
@@ -108,7 +108,7 @@ fun TabGallery(
         var bundles by remember { mutableStateOf(listOf<Bundle>()) }
 
         LaunchedEffect(true) {
-            withContext(Dispatchers.IO) {
+            withContext(IO) {
                 prints = data.getPrints().getOrDefault(listOf())
                 bundles = data.getBundles().getOrDefault(listOf())
             }
@@ -211,7 +211,7 @@ fun Gallery(
     bundleOnClick: (bundle: Bundle) -> Unit = {}
 ) {
     LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Adaptive(180.dp),
+        columns = StaggeredGridCells.Adaptive(130.dp),
         modifier = Modifier.fillMaxSize(),
         verticalItemSpacing = 10.dp,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

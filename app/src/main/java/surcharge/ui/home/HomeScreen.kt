@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import surcharge.data.AppContainer
 import surcharge.utils.debounce.debounced
+import surcharge.utils.retrofit.Location
 
 @Composable
 fun HomeScreen(
@@ -87,12 +88,15 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         var user by remember { mutableStateOf("User") }
+                        var location by remember { mutableStateOf(Location(locationName = "Location")) }
                         LaunchedEffect(true) {
                             user = app.settings.readArtist()
+                            location = app.settings.readLocation()
                         }
 
                         Text(
-                            "Welcome, $user", style = MaterialTheme.typography.titleLarge
+                            "$user | ${location.locationName}",
+                            style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.AccountCircle, "Account")
                     }
@@ -150,7 +154,7 @@ fun Page(
             )
             Icon(
                 imageVector = icon,
-                contentDescription = ""
+                contentDescription = title
             )
         }
         Text(

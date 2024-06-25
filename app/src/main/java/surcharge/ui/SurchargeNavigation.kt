@@ -4,6 +4,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 
 object SurchargeDestinations {
+    const val LOGIN_ROUTE = "login"
     const val HOME_ROUTE = "home"
     const val ACCOUNT_ROUTE = "account"
     const val MANAGE_SHOP_ROUTE = "manage"
@@ -16,6 +17,15 @@ object SurchargeDestinations {
 }
 
 class SurchargeNavigationActions(navController: NavHostController) {
+    val navigateToLogin: () -> Unit = {
+        navController.navigate(SurchargeDestinations.LOGIN_ROUTE) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+        }
+    }
+
     val navigateToHome: () -> Unit = {
         navController.navigate(SurchargeDestinations.HOME_ROUTE) {
             popUpTo(navController.graph.findStartDestination().id) {

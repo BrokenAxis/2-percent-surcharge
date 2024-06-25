@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contrast
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,10 +45,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
 import surcharge.ui.theme.earth_seed
 import surcharge.ui.theme.ocean_seed
+import surcharge.ui.theme.primaryLight
 import surcharge.utils.components.Tile
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,8 +101,30 @@ fun SettingsScreen(
                 icon = Icons.Filled.DeveloperMode,
                 onClick = { onNavigateToDev() })
 
+            var checked by remember { mutableStateOf(false) }
+            LaunchedEffect(true) {
+                checked = withContext(IO) { app.settings.readAlternateSale() }
+            }
+            val scope = rememberCoroutineScope()
+            Tile(
+                title = "Alternate Sales Calculation",
+                subtitle = "Calculate sales by using total sale amount rather than considering bundle discounts separately",
+                icon = Icons.Filled.Calculate,
+                onClick = {},
+                switch = {
+                    Switch(
+                        checked = checked,
+                        onCheckedChange = {
+                            checked = it
+                            scope.launch(IO) {
+                                app.settings.updateAlternateSale(checked)
+                            }
+                        },
+                        Modifier.padding(20.dp)
+                    )
+                }
+            )
         }
-
     }
 }
 
@@ -130,16 +158,16 @@ fun Personalisation(
         var selected by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(true) {
-            withContext(Dispatchers.IO) {
+            withContext(IO) {
                 selected = app.settings.readTheme()
             }
         }
 
         LaunchedEffect(selected) {
-            withContext(Dispatchers.IO) {
+            withContext(IO) {
                 if (selected != app.settings.readTheme()) {
                     app.settings.updateTheme(selected)
-                    app.theme.value = selected
+                    app.theme.intValue = selected
                 }
             }
         }
@@ -154,6 +182,12 @@ fun Personalisation(
             onClick = {
                 selected = 1
             }, name = "Earth", colour = earth_seed
+        )
+
+        Theme(
+            onClick = {
+                selected = 2
+            }, name = "Limitless", colour = primaryLight
         )
     }
 

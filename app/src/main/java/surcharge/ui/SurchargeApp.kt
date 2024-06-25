@@ -8,12 +8,16 @@ import androidx.navigation.compose.rememberNavController
 import surcharge.data.AppContainer
 
 @Composable
-fun SurchargeApp(appContainer: AppContainer) {
+fun SurchargeApp(appContainer: AppContainer, startDestination: String? = null) {
     val navController = rememberNavController()
     val navigationActions = remember(navController) {
         SurchargeNavigationActions(navController)
     }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: SurchargeDestinations.HOME_ROUTE
-    SurchargeNavGraph(appContainer = appContainer, navController = navController)
+    SurchargeNavGraph(
+        appContainer = appContainer,
+        navController = navController,
+        startDestination = startDestination ?: currentRoute
+    )
 }

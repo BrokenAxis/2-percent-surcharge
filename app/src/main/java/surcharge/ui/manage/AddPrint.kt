@@ -217,6 +217,7 @@ fun AddPrint(
         var imageUri by remember { mutableStateOf<Uri?>(null) }
         val image = remember { mutableStateOf("") }
         val progress = remember { mutableDoubleStateOf(0.0) }
+        var success by remember { mutableStateOf(false) }
         var sizeDialog by remember { mutableStateOf(false) }
 
         if (sizeDialog) {
@@ -260,16 +261,14 @@ fun AddPrint(
                 }
 
                 key(imageUri) {
-                    if (imageUri != null && progress.doubleValue != 1.0) {
-                        if (image.value.isEmpty()) {
-                            LinearProgressIndicator(
-                                progress = { progress.doubleValue.toFloat() },
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                    } else if (imageUri != null && progress.doubleValue == 1.0) {
+                    if (imageUri != null && !success) {
+                        LinearProgressIndicator(
+                            progress = { progress.doubleValue.toFloat() },
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .fillMaxWidth()
+                        )
+                    } else if (success) {
                         Text(
                             text = "Upload Complete!",
                             modifier = Modifier.padding(start = 20.dp, top = 5.dp),
@@ -282,21 +281,25 @@ fun AddPrint(
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia()
             ) { uri: Uri? ->
-                imageUri = uri
-                upload(
-                    image = imageUri!!,
-                    artist = print.artist,
-                    name = name,
-                    url = image,
-                    progress = progress,
-                    scope = scope,
-                    snackbar = snackbarHostState
-                )
+                if (uri != null) {
+                    imageUri = uri
+                    upload(
+                        image = imageUri!!,
+                        artist = print.artist,
+                        name = name,
+                        url = image,
+                        progress = progress,
+                        onSuccess = { success = true },
+                        scope = scope,
+                        snackbar = snackbarHostState
+                    )
+                }
             }
 
             FilledTonalButton(
                 onClick = {
                     image.value = ""
+                    success = false
                     launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 modifier = Modifier
@@ -313,7 +316,7 @@ fun AddPrint(
                         && selectedSizes.isNotEmpty()
                         && print.artist.isNotEmpty()
                         && property.isNotEmpty()
-                        && (imageUri != null && progress.doubleValue == 1.0)
+                        && success
                     ) {
                         print.name = name
                         print.property = property

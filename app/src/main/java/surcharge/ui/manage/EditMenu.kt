@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.PriceChange
 import androidx.compose.material3.BottomAppBar
@@ -15,6 +16,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -39,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
@@ -74,12 +79,12 @@ fun EditMenu(
                 onConfirm = {
                     openAddPrintDialog = false
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             app.data.addPrint(print)
                         }
                     }
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             snackbarHostState.showSnackbar("Print Added!")
                         }
                     }
@@ -105,12 +110,12 @@ fun EditMenu(
                     refresh++
                     openAddBundleDialog = false
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             app.data.addBundle(bundle)
                         }
                     }
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             snackbarHostState.showSnackbar("Bundle Added!")
                         }
                     }
@@ -133,12 +138,12 @@ fun EditMenu(
                     refresh++
                     viewPrint = false
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             app.data.editPrint(print)
                         }
                     }
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             snackbarHostState.showSnackbar("Print Edited!")
                         }
                     }
@@ -165,12 +170,12 @@ fun EditMenu(
                     refresh++
                     viewBundle = false
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             app.data.editBundle(bundle)
                         }
                     }
                     scope.launch {
-                        withContext(Dispatchers.IO) {
+                        withContext(IO) {
                             snackbarHostState.showSnackbar("Bundle Edited!")
                         }
                     }
@@ -191,7 +196,7 @@ fun EditMenu(
             ElevatedCard {
                 var cash by remember { mutableStateOf("") }
                 LaunchedEffect(true) {
-                    withContext(Dispatchers.IO) { cash = formatPrice(app.settings.readCash()) }
+                    withContext(IO) { cash = formatPrice(app.settings.readCash()) }
                 }
 
                 TextField(
@@ -213,7 +218,7 @@ fun EditMenu(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            withContext(Dispatchers.IO) {
+                            withContext(IO) {
                                 app.settings.updateCash(intPrice(cash))
                             }
                         }
@@ -242,7 +247,7 @@ fun EditMenu(
                 val sizes = Size.entries.toTypedArray()
                 val prices = remember { List(sizes.size) { formatPrice(0) }.toMutableStateList() }
                 LaunchedEffect(true) {
-                    withContext(Dispatchers.IO) {
+                    withContext(IO) {
                         val default =
                             app.settings.readDefaultPrices().mapValues { formatPrice(it.value) }
                         default.forEach { prices[it.key.ordinal] = it.value }
@@ -272,7 +277,7 @@ fun EditMenu(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            withContext(Dispatchers.IO) {
+                            withContext(IO) {
                                 val success =
                                     app.settings.updateDefaultPrices(prices.map { intPrice(it) }
                                         .mapIndexed { index, price -> sizes[index] to price }
@@ -285,6 +290,78 @@ fun EditMenu(
                     },
                     modifier = Modifier.align(Alignment.End),
                     enabled = !isError.contains(true)
+                ) {
+                    Text("Confirm")
+                }
+            }
+        }
+    }
+
+    var viewChangePrice by remember { mutableStateOf(false) }
+    if (viewChangePrice) {
+        Dialog(
+            onDismissRequest = { viewChangePrice = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ElevatedCard {
+                Text(
+                    text = "Change All Print Prices",
+                    modifier = Modifier.padding(20.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                var selectedSize by remember { mutableStateOf(Size.A5) }
+
+                SingleChoiceSegmentedButtonRow(Modifier.padding(horizontal = 20.dp)) {
+                    Size.entries.forEachIndexed { index, size ->
+                        SegmentedButton(
+                            selected = index == selectedSize.ordinal,
+                            onClick = {
+                                selectedSize = Size.entries.toTypedArray()[index]
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index, count = Size.entries.size
+                            )
+                        ) {
+                            Text(size.name)
+                        }
+                    }
+                }
+
+                var price by remember { mutableStateOf("") }
+                var isError by remember { mutableStateOf(true) }
+
+                TextField(
+                    value = price,
+                    onValueChange = {
+                        price = it
+                        isError = !validatePrice(it)
+                    },
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .align(Alignment.CenterHorizontally),
+                    label = { Text("Price") },
+                    prefix = { Text("$ ") },
+                    supportingText = { Text("Update amount") },
+                    isError = isError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
+                TextButton(
+                    onClick = {
+                        scope.launch(IO) {
+                            val prints = app.data.getPrints().getOrDefault(listOf())
+                            prints.forEach { print ->
+                                if (print.sizes.contains(selectedSize)) {
+                                    print.price[selectedSize] = intPrice(price)
+                                    app.data.editPrint(print)
+                                }
+                            }
+                            refresh++
+                        }
+                        viewChangePrice = false
+                    },
+                    modifier = Modifier.align(Alignment.End),
+                    enabled = !isError
                 ) {
                     Text("Confirm")
                 }
@@ -314,6 +391,9 @@ fun EditMenu(
                     }
                     IconButton(onClick = { viewDefaultPrice = true }) {
                         Icon(Icons.Filled.PriceChange, "Change Default Price")
+                    }
+                    IconButton(onClick = { viewChangePrice = true }) {
+                        Icon(Icons.Filled.Edit, "Change Print Price")
                     }
 //            IconButton(onClick = { /* do something */ }) {
 //                Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")

@@ -47,17 +47,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import surcharge.data.prints.Data
-import surcharge.data.prints.TempData
+import surcharge.data.AppContainer
 import surcharge.types.Artist
 import surcharge.types.Sale
+import surcharge.utils.altArtistTotal
 import surcharge.utils.artistTotal
 import surcharge.utils.components.Tile
 import surcharge.utils.components.gallery.PrintImage
@@ -67,7 +66,7 @@ import surcharge.utils.formatTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
-    data: Data,
+    app: AppContainer,
     onNavigateToAnalytics: () -> Unit = {},
     onBack: () -> Unit
 ) {
@@ -98,10 +97,12 @@ fun ReviewScreen(
             var refresh by remember { mutableIntStateOf(0) }
             var artists by remember { mutableStateOf(listOf<Artist>()) }
             var sales by remember { mutableStateOf(listOf<Sale>()) }
+            var alternateSale by remember { mutableStateOf(false) }
             LaunchedEffect(refresh) {
                 withContext(IO) {
-                    artists = data.getArtists().getOrDefault(listOf())
-                    sales = data.getSales().getOrDefault(listOf())
+                    artists = app.data.getArtists().getOrDefault(listOf())
+                    sales = app.data.getSales().getOrDefault(listOf())
+                    alternateSale = app.settings.readAlternateSale()
                 }
             }
             val scope = rememberCoroutineScope()
@@ -123,10 +124,11 @@ fun ReviewScreen(
                         Column {
                             TransactionCard(sale = sale) {}
                             Text("Total discount: WIP", Modifier.padding(start = 10.dp))
+                            Text(sale.comment, Modifier.padding(10.dp))
                             TextButton(onClick = {
                                 scope.launch {
                                     withContext(IO) {
-                                        if (!data.deleteSale(sale)) snackbar.showSnackbar("Error deleting sale!")
+                                        if (!app.data.deleteSale(sale)) snackbar.showSnackbar("Error deleting sale!")
                                     }
                                     refresh++
                                     viewSale = false
@@ -176,7 +178,10 @@ fun ReviewScreen(
 
                             Spacer(Modifier.height(20.dp))
 
-                            Text(
+                            if (alternateSale) Text(
+                                text = "$${formatPrice(altArtistTotal(sales, artist))}",
+                                style = MaterialTheme.typography.displayMedium
+                            ) else Text(
                                 text = "$${formatPrice(artistTotal(sales, artist))}",
                                 style = MaterialTheme.typography.displayMedium
                             )
@@ -195,8 +200,9 @@ fun ReviewScreen(
             Tile(
                 title = "Stock",
                 subtitle = "review stock, cash on hand",
-                icon = Icons.Filled.AllInbox
-            ) {}
+                icon = Icons.Filled.AllInbox,
+                onClick = {}
+            )
 
             Text("Recent Transactions", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(10.dp))
@@ -280,8 +286,8 @@ fun TransactionCard(sale: Sale, onClick: () -> Unit) {
     }
 }
 
-@Preview
-@Composable
-private fun Prev() {
-    ReviewScreen(data = TempData()) {}
-}
+//@Preview
+//@Composable
+//private fun Prev() {
+//    ReviewScreen(data = TempData()) {}
+//}

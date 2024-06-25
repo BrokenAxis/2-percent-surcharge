@@ -16,6 +16,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.Card
@@ -32,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -56,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.squareup.sdk.mobilepayments.MobilePaymentsSdk
+import com.squareup.sdk.mobilepayments.core.Result
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,6 +69,7 @@ import surcharge.data.AppContainer
 import surcharge.types.Artist
 import surcharge.utils.components.Tile
 import surcharge.utils.img.upload
+import surcharge.utils.retrofit.Token
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,6 +78,7 @@ fun AccountScreen(
     onBack: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -105,6 +113,22 @@ fun AccountScreen(
                 onClick = { viewSelectDialog = true }
             )
 
+            var viewEditArtist by remember { mutableStateOf(false) }
+
+            if (viewEditArtist) {
+                EditArtist(
+                    app = app,
+                    onDismissRequest = { viewEditArtist = false },
+                    snackbarHostState = snackbarHostState
+                )
+            }
+
+            Tile(title = "Edit Artist",
+                subtitle = "Change artist profile picture",
+                icon = Icons.Filled.Image,
+                onClick = { viewEditArtist = true }
+            )
+
             var viewAddDialog by remember { mutableStateOf(false) }
 
             if (viewAddDialog) {
@@ -120,81 +144,46 @@ fun AccountScreen(
                 icon = Icons.Filled.PersonAdd,
                 onClick = { viewAddDialog = true }
             )
+            var accessToken by remember { mutableStateOf("") }
+            var token by remember { mutableStateOf(Token()) }
+            LaunchedEffect(true) {
+                withContext(IO) {
+                    accessToken = app.settings.readSquareAccessToken().accessToken
+                    token = app.settings.readSquareAccessToken()
+                }
+            }
 
-//            var squareId by remember { mutableStateOf("") }
-//            LaunchedEffect(true) {
-//                withContext(IO) {
-//                    squareId = app.settings.readSquareID()
-//                }
-//            }
-//            val scope = rememberCoroutineScope()
-//
-//            var viewSquareDialog by remember { mutableStateOf(false) }
-//            val authManager = MobilePaymentsSdk.authorizationManager()
-//
-//            val launcher =
-//                rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
-//                    when (result.resultCode) {
-//                        RESULT_OK -> {
-//                            val data: Uri? = result.data?.data
-//                            val authorizationCode =
-//                                data?.getQueryParameter("code") // Extract authorization code
-//                            authorizationCode?.let {
-//                                val a = authManager.authorize(authorizationCode, null) { result ->
-//                                    when (result) {
-//                                        is Result.Success -> {
-//                                            scope.launch {
-//                                                withContext(IO) {
-//                                                    snackbarHostState.showSnackbar("Successfully connected to square")
-//                                                }
-//                                            }
-//                                            scope.launch {
-//                                                // save token
-//                                                result.value
-//                                            }
-//                                        }
-//
-//                                        is Result.Failure -> {
-//                                            when (result.errorCode) {
-//                                                AuthorizeErrorCode.NO_NETWORK -> {} // TODO
-//                                                AuthorizeErrorCode.USAGE_ERROR -> {
-//                                                    scope.launch {
-//                                                        withContext(IO) {
-//                                                            snackbarHostState.showSnackbar("Error: ${result.errorMessage}")
-//                                                        }
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                                a.clear()
-//
-//                            }
-//                        }
-//
-//                        RESULT_CANCELED -> {
-//                            // handle failure
-//                            scope.launch {
-//                                withContext(IO) {
-//                                    snackbarHostState.showSnackbar("Failed to connect to square")
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            if (viewSquareDialog) {
-//                SquareAuth(
-//                    clientId = squareId,
-//                    launcher = launcher
-//                )
-//            }
-//
-//            Tile(title = "Square Integration",
-//                subtitle = "Link your square account",
-//                icon = Icons.Filled.CropSquare,
-//                onClick = { viewSquareDialog = true }
-//            )
+            Tile(title = "Log In",
+                subtitle = "Debug only",
+                icon = Icons.AutoMirrored.Filled.Login,
+                onClick = {
+                    MobilePaymentsSdk.authorizationManager()
+                        .authorize(accessToken, app.squareLocationId) { result ->
+                            when (result) {
+                                is Result.Success -> scope.launch(IO) {
+                                    snackbarHostState.showSnackbar(
+                                        result.toString()
+                                    )
+                                }
+
+                                is Result.Failure -> scope.launch(IO) {
+                                    snackbarHostState.showSnackbar(
+                                        token.toString()
+                                    )
+                                }
+                            }
+                        }
+                }
+            )
+
+            Tile(title = "Log Out",
+                subtitle = "This will log you out of the app (restart app pls)",
+                icon = Icons.AutoMirrored.Filled.Logout,
+                onClick = {
+                    MobilePaymentsSdk.authorizationManager().deauthorize()
+                    scope.launch(IO) { app.settings.updateSquareAccessToken(Token()) }
+                }
+            )
         }
     }
 }
@@ -307,6 +296,7 @@ private fun AddArtist(
             var imageUri by remember { mutableStateOf<Uri?>(null) }
             val image = remember { mutableStateOf("") }
             val progress = remember { mutableDoubleStateOf(0.0) }
+            var success by remember { mutableStateOf(false) }
 
             Column(Modifier.fillMaxWidth()) {
                 Card(
@@ -329,33 +319,40 @@ private fun AddArtist(
                     }
                 }
 
-                val scope = rememberCoroutineScope()
-
                 key(imageUri) {
-                    if (imageUri != null && progress.doubleValue != 1.0) {
-                        upload(
-                            image = imageUri!!,
-                            artist = name,
-                            url = image,
-                            progress = progress,
-                            scope = scope,
-                            snackbar = snackbarHostState
+                    if (imageUri != null && !success) {
+                        LinearProgressIndicator(
+                            progress = { progress.doubleValue.toFloat() },
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .fillMaxWidth()
                         )
-                        if (image.value.isNotEmpty()) {
-                            LinearProgressIndicator(
-                                progress = { progress.doubleValue.toFloat() },
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
+                    }
+                    if (success) {
+                        Text(
+                            text = "Upload Complete!",
+                            modifier = Modifier.padding(start = 20.dp, top = 5.dp),
+                            style = MaterialTheme.typography.labelMedium
+                        )
                     } else Spacer(Modifier.height(5.dp))
                 }
             }
+            val scope = rememberCoroutineScope()
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia()
             ) { uri: Uri? ->
-                imageUri = uri
+                if (uri != null) {
+                    imageUri = uri
+                    upload(
+                        image = imageUri!!,
+                        artist = name,
+                        url = image,
+                        progress = progress,
+                        onSuccess = { success = true },
+                        scope = scope,
+                        snackbar = snackbarHostState
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -363,6 +360,7 @@ private fun AddArtist(
             FilledTonalButton(
                 onClick = {
                     image.value = ""
+                    success = false
                     launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 modifier = Modifier
@@ -371,45 +369,174 @@ private fun AddArtist(
             ) {
                 Text("Upload Image")
             }
-            val scope = rememberCoroutineScope()
             TextButton(
                 onClick = {
-                    scope.launch {
-                        withContext(IO) {
-                            app.data.addArtist(Artist(name, image.value))
-                        }
+                    scope.launch(IO) {
+                        app.data.addArtist(Artist(name, image.value))
                     }
                     onDismissRequest()
                 },
                 modifier = Modifier.align(Alignment.End),
-                enabled = imageUri != null && name.isNotEmpty()
+                enabled = success && name.isNotEmpty()
             ) {
                 Text("Confirm")
             }
         }
-
     }
 }
 
-//@Composable
-//fun SquareAuth(
-//    clientId: String,
-//    launcher: ManagedActivityResultLauncher<Intent, ActivityResult>
-//) {
-//
-//    val perms =
-//        "MERCHANT_PROFILE_READ PAYMENTS_WRITE PAYMENTS_WRITE_IN_PERSON PAYMENTS_WRITE_ADDITIONAL_RECIPIENTS"
-//
-//    val url = Uri.Builder()
-//        .scheme("https")
-//        .authority("connect.squareup.com")
-//        .appendPath("oauth2")
-//        .appendPath("authorize")
-//        .appendQueryParameter("client_id", clientId)
-//        .appendQueryParameter("scope", perms)
-//        .appendQueryParameter("response_type", "code")
-//        .build()
-//
-//    val intent = Intent(Intent.ACTION_VIEW, url)
-//    launcher.launch(intent)
-//}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditArtist(
+    app: AppContainer,
+    onDismissRequest: () -> Unit,
+    snackbarHostState: SnackbarHostState
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        ElevatedCard {
+            Text(
+                text = "Change Artist Profile Picture",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .padding(vertical = 20.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            HorizontalDivider()
+
+            var artists by remember { mutableStateOf(listOf(Artist())) }
+
+            LaunchedEffect(true) {
+                withContext(IO) {
+                    artists = app.data.getArtists().getOrDefault(listOf(Artist()))
+                }
+            }
+
+            var artistExpanded by remember { mutableStateOf(false) }
+            var selected by remember { mutableStateOf(artists.first()) }
+
+            ExposedDropdownMenuBox(
+                expanded = artistExpanded,
+                onExpandedChange = { artistExpanded = !artistExpanded },
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
+                    readOnly = true,
+                    value = selected.name,
+                    onValueChange = {},
+                    label = { Text("Artist") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = artistExpanded) }
+                )
+                ExposedDropdownMenu(
+                    expanded = artistExpanded,
+                    onDismissRequest = { artistExpanded = false }
+                ) {
+                    artists.forEach { artist ->
+                        DropdownMenuItem(
+                            text = { Text(artist.name) },
+                            onClick = {
+                                artistExpanded = false
+                                selected = artist
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                        )
+                    }
+                }
+            }
+
+            var imageUri by remember { mutableStateOf<Uri?>(null) }
+            val image = remember { mutableStateOf("") }
+            val progress = remember { mutableDoubleStateOf(0.0) }
+            var success by remember { mutableStateOf(false) }
+
+            Column(Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .align(Alignment.CenterHorizontally),
+                    shape = CircleShape,
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)
+                ) {
+                    if (imageUri != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageUri)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "uploaded image",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                key(imageUri) {
+                    if (imageUri != null && !success) {
+                        LinearProgressIndicator(
+                            progress = { progress.doubleValue.toFloat() },
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+                    if (success) {
+                        Text(
+                            text = "Upload Complete!",
+                            modifier = Modifier.padding(start = 20.dp, top = 5.dp),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    } else Spacer(Modifier.height(5.dp))
+                }
+            }
+            val scope = rememberCoroutineScope()
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    imageUri = uri
+                    upload(
+                        image = imageUri!!,
+                        artist = selected.name,
+                        url = image,
+                        progress = progress,
+                        onSuccess = { success = true },
+                        scope = scope,
+                        snackbar = snackbarHostState
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            FilledTonalButton(
+                onClick = {
+                    image.value = ""
+                    success = false
+                    launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                modifier = Modifier.padding(start = 30.dp)
+            ) {
+                Text("Upload Image")
+            }
+            TextButton(
+                onClick = {
+                    selected.image = image.value
+                    scope.launch(IO) {
+                        app.data.addArtist(selected)
+                    }
+                    onDismissRequest()
+                },
+                modifier = Modifier.align(Alignment.End),
+                enabled = success
+            ) {
+                Text("Confirm")
+            }
+        }
+    }
+}

@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -19,10 +20,10 @@ import java.util.UUID
 
 @Dao
 interface BaseDao<T> {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(entity: T): Long
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(entities: List<T>)
 
     @Update

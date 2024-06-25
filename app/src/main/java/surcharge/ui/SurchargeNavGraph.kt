@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import surcharge.data.AppContainer
 import surcharge.ui.account.AccountScreen
 import surcharge.ui.home.HomeScreen
+import surcharge.ui.login.LoginScreen
 import surcharge.ui.manage.EditMenu
 import surcharge.ui.pointOfSale.SalesMenu
 import surcharge.ui.review.AnalyticsScreen
@@ -33,16 +34,37 @@ fun SurchargeNavGraph(
     appContainer: AppContainer,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = SurchargeDestinations.HOME_ROUTE
+    startDestination: String = SurchargeDestinations.HOME_ROUTE,
 ) {
-
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier
+        modifier = modifier,
     ) {
         composable(
-            route = SurchargeDestinations.HOME_ROUTE
+            route = SurchargeDestinations.LOGIN_ROUTE,
+        ) {
+            LoginScreen(
+                app = appContainer,
+                onNavigateToHome = { navController.navigate(SurchargeDestinations.HOME_ROUTE) }
+            )
+        }
+        composable(
+            route = SurchargeDestinations.HOME_ROUTE,
+            enterTransition = {
+                fadeIn(
+                    animationSpec = tween(
+                        300, easing = LinearEasing
+                    )
+                )
+            },
+            exitTransition = {
+                fadeOut(
+                    animationSpec = tween(
+                        10000, easing = LinearEasing
+                    )
+                )
+            },
         ) {
             HomeScreen(
                 app = appContainer,
@@ -66,11 +88,7 @@ fun SurchargeNavGraph(
                 )
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(
-                        300, easing = LinearEasing
-                    )
-                ) + slideOutVertically(
+                slideOutVertically(
                     animationSpec = tween(300, easing = EaseOut),
                     targetOffsetY = { it / 2 }
                 )
@@ -90,11 +108,7 @@ fun SurchargeNavGraph(
                 )
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(
-                        300, easing = LinearEasing
-                    )
-                ) + slideOutOfContainer(
+                slideOutOfContainer(
                     animationSpec = tween(300, easing = EaseOut),
                     towards = AnimatedContentTransitionScope.SlideDirection.End
                 )
@@ -118,11 +132,7 @@ fun SurchargeNavGraph(
                 )
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(
-                        300, easing = LinearEasing
-                    )
-                ) + slideOutOfContainer(
+                slideOutOfContainer(
                     animationSpec = tween(300, easing = EaseOut),
                     towards = AnimatedContentTransitionScope.SlideDirection.End
                 )
@@ -146,11 +156,7 @@ fun SurchargeNavGraph(
                 )
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(
-                        300, easing = LinearEasing
-                    )
-                ) + slideOutOfContainer(
+                slideOutOfContainer(
                     animationSpec = tween(300, easing = EaseOut),
                     towards = AnimatedContentTransitionScope.SlideDirection.End
                 )
@@ -169,7 +175,7 @@ fun SurchargeNavGraph(
             }
         ) {
             ReviewScreen(
-                data = appContainer.data,
+                app = appContainer,
                 onNavigateToAnalytics = { navController.navigate(SurchargeDestinations.ANALYTICS_ROUTE) },
                 onBack = { navController.popBackStack() }
             )
@@ -187,11 +193,7 @@ fun SurchargeNavGraph(
                 )
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(
-                        300, easing = LinearEasing
-                    )
-                ) + slideOutOfContainer(
+                slideOutOfContainer(
                     animationSpec = tween(300, easing = EaseOut),
                     towards = AnimatedContentTransitionScope.SlideDirection.End
                 )

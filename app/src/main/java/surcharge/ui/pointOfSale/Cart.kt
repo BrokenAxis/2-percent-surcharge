@@ -1,9 +1,5 @@
 package surcharge.ui.pointOfSale
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.text.isDigitsOnly
-import com.squareup.sdk.pos.PosClient
+import com.squareup.sdk.mobilepayments.payment.Payment
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,9 +62,8 @@ import kotlin.math.ceil
 @Composable
 fun Cart(
     onClose: () -> Unit,
-    onCheckout: () -> Unit,
+    onCheckout: (Payment?) -> Unit,
     onCheckoutError: (error: String) -> Unit,
-    posClient: PosClient,
     sale: Sale,
     app: AppContainer
 ) {
@@ -77,18 +72,16 @@ fun Cart(
     var total by remember { mutableIntStateOf(sale.prints.sumOf { it.price * it.quantity } + sale.bundles.sumOf { it.price * it.quantity }) }
     if (cashCheckout) {
         key(total) {
-            CashCheckout(onConfirm = {
-                cashCheckout = false
-                sale.price = total
-
-                scope.launch {
-                    withContext(IO) {
+            CashCheckout(
+                onConfirm = {
+                    cashCheckout = false
+                    sale.price = total
+                    scope.launch(IO) {
                         app.settings.updateCash(app.settings.readCash() + total)
                     }
-                }
-
-                onCheckout()
-            }, onDismiss = { cashCheckout = false }, total = total
+                    onCheckout(null)
+                },
+                onDismiss = { cashCheckout = false }, total = total
             )
         }
     }
@@ -179,8 +172,6 @@ fun Cart(
                             )
                         }
                     }
-
-
                 }
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
@@ -234,7 +225,7 @@ fun Cart(
 
         Spacer(Modifier.weight(1f))
 
-        var selectedIndex by remember { mutableStateOf(PaymentType.CASH) }
+        var selectedIndex by remember { mutableStateOf(PaymentType.CARD) }
         val options = listOf("Cash", "Card")
         SingleChoiceSegmentedButtonRow(Modifier.padding(10.dp)) {
             options.forEachIndexed { index, label ->
@@ -286,11 +277,6 @@ fun Cart(
                     }
                 }
 
-                val launcher =
-                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                        onCardCheckoutResult(sale, it, posClient, onCheckout, onCheckoutError)
-                    }
-
                 FloatingActionButton(onClick = {
                     if (total != 0) {
                         sale.price = total
@@ -298,10 +284,10 @@ fun Cart(
                         when (selectedIndex) {
                             PaymentType.CASH -> cashCheckout = true
                             PaymentType.CARD -> handleCardCheckout(
-                                (total.toDouble() * 1.02).toInt(),
-                                posClient,
-                                launcher,
-                                onCheckoutError
+                                total = (total.toDouble() * 1.02).toInt(),
+                                saleId = sale.saleId,
+                                onSuccess = onCheckout,
+                                onError = onCheckoutError
                             )
                         }
                     }
@@ -399,24 +385,6 @@ fun EditDialog(
                 }
             }
         }
-    }
-}
-
-fun onCardCheckoutResult(
-    sale: Sale,
-    result: ActivityResult,
-    posClient: PosClient,
-    onCheckout: () -> Unit,
-    onCheckoutError: (error: String) -> Unit
-) {
-
-    if (result.resultCode == Activity.RESULT_OK) {
-        val success = posClient.parseChargeSuccess(result.data!!)
-        sale.comment = success.requestMetadata.toString()
-        onCheckout()
-    } else {
-        val error = posClient.parseChargeError(result.data!!)
-        onCheckoutError(error.debugDescription)
     }
 }
 

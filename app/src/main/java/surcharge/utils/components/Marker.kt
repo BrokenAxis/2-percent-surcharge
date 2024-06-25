@@ -27,7 +27,7 @@ import com.patrykandpatrick.vico.core.common.shape.Shape
 
 @Composable
 internal fun rememberMarker(
-    labelPosition: DefaultCartesianMarker.LabelPosition = DefaultCartesianMarker.LabelPosition.Top,
+    labelPosition: DefaultCartesianMarker.LabelPosition = DefaultCartesianMarker.LabelPosition.AbovePoint,
     showIndicator: Boolean = true,
 ): CartesianMarker {
     val labelBackgroundShape = Shape.markerCornered(Corner.FullyRounded)

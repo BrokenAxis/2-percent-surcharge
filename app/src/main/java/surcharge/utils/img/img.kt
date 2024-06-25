@@ -22,14 +22,15 @@ fun upload(
     name: String,
     url: MutableState<String>,
     progress: MutableDoubleState,
+    onSuccess: () -> Unit,
     scope: CoroutineScope,
     snackbar: SnackbarHostState
 ): String {
 
     val requestId = MediaManager.get().upload(image)
-        .unsigned("prints")
+        .option("upload_preset", "prints")
         .option("public_id", "$artist/$name")
-        .callback(ImgCallback(url, progress, scope, snackbar))
+        .callback(ImgCallback(url, progress, onSuccess, scope, snackbar))
         .dispatch()
 
     return requestId
@@ -44,14 +45,15 @@ fun upload(
     artist: String,
     url: MutableState<String>,
     progress: MutableDoubleState,
+    onSuccess: () -> Unit,
     scope: CoroutineScope,
     snackbar: SnackbarHostState
 ): String {
 
     val requestId = MediaManager.get().upload(image)
-        .unsigned("display pictures")
+        .option("upload_preset", "display pictures")
         .option("public_id", artist)
-        .callback(ImgCallback(url, progress, scope, snackbar))
+        .callback(ImgCallback(url, progress, onSuccess, scope, snackbar))
         .dispatch()
 
     return requestId
@@ -60,6 +62,7 @@ fun upload(
 private class ImgCallback(
     private val url: MutableState<String>,
     private val progress: MutableDoubleState,
+    private val onSuccess: () -> Unit,
     private val scope: CoroutineScope,
     private val snackbar: SnackbarHostState
 ) : UploadCallback {
@@ -73,8 +76,8 @@ private class ImgCallback(
     }
 
     override fun onSuccess(requestId: String, resultData: Map<*, *>?) {
-        progress.doubleValue = 1.0
-       url.value = resultData?.get("secure_url").toString()
+        url.value = resultData?.get("secure_url").toString()
+        onSuccess()
     }
 
     override fun onError(requestId: String, error: ErrorInfo) {
