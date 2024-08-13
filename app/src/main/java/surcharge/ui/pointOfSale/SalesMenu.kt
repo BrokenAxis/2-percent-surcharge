@@ -89,6 +89,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
+import surcharge.data.prints.Firestore
 import surcharge.types.Artist
 import surcharge.types.Bundle
 import surcharge.types.BundleItem
@@ -133,7 +134,7 @@ fun SalesMenu(
         withContext(IO) {
             autoDiscount = app.settings.readDiscount()
             artists = app.data.getArtists().getOrDefault(listOf())
-            prints = app.data.getPrints().getOrDefault(listOf())
+            prints = (app.data as Firestore).getCachedPrints().getOrDefault(listOf())
         }
     }
 
@@ -154,7 +155,7 @@ fun SalesMenu(
                 artists.forEach { _ -> artistSelected.add(false) }
 
                 LazyHorizontalStaggeredGrid(
-                    rows = StaggeredGridCells.Adaptive(20.dp),
+                    rows = StaggeredGridCells.Adaptive(25.dp),
                     modifier = Modifier
                         .heightIn(80.dp, 160.dp)
                         .padding(10.dp),
@@ -309,7 +310,7 @@ fun SalesMenu(
             Cart(
                 onClose = { openCartDialog = false },
                 onCheckout = { payment ->
-                    sale.time = Instant.now()
+                    sale.time = Instant.now().toString()
                     scope.launch {
                         if (payment != null) {
                             val cardPayment = (payment as Payment.OnlinePayment).cardDetails!!
@@ -334,7 +335,8 @@ fun SalesMenu(
                                     Print()
                                 }
 
-                                print.stock[item.size] = print.stock[item.size]!! - item.quantity
+                                print.stock[item.size.toString()] =
+                                    print.stock[item.size.toString()]!! - item.quantity
                                 if (!app.data.editPrint(print)) {
                                     snackbarHostState.showSnackbar("Error: $print")
                                 }
@@ -347,8 +349,8 @@ fun SalesMenu(
                                         Print()
                                     }
 
-                                    print.stock[item.size] =
-                                        print.stock[item.size]!! - (bundle.quantity * item.quantity)
+                                    print.stock[item.size.toString()] =
+                                        print.stock[item.size.toString()]!! - (bundle.quantity * item.quantity)
                                     if (!app.data.editPrint(print)) {
                                         snackbarHostState.showSnackbar("Error: $print")
                                     }
@@ -390,12 +392,12 @@ fun SalesMenu(
             IconButton(onClick = { filter = true }) {
                 Icon(Icons.Filled.FilterAlt, contentDescription = "Filter")
             }
-            IconButton(onClick = { search = true }) {
-                Icon(
-                    Icons.Filled.Search,
-                    contentDescription = "Search",
-                )
-            }
+//            IconButton(onClick = { search = true }) {
+//                Icon(
+//                    Icons.Filled.Search,
+//                    contentDescription = "Search",
+//                )
+//            }
             IconButton(onClick = {
                 sale = Sale()
                 scope.launch {
@@ -565,13 +567,13 @@ fun SalesMenu(
                             onClick = {
                                 openPrintDialog = false
                                 val printIndex =
-                                    sale.prints.indexOfFirst { it.name == selectedPrint.name && it.size == selectedSize && it.price == selectedPrint.price[selectedSize] }
+                                    sale.prints.indexOfFirst { it.name == selectedPrint.name && it.size == selectedSize && it.price == selectedPrint.price[selectedSize.toString()] }
                                 if (printIndex != -1) {
                                     sale.prints[printIndex].quantity++
                                 } else {
                                     sale.prints.add(createPrintItem(selectedPrint, selectedSize))
                                 }
-                                sale.price += selectedPrint.price[selectedSize]!!
+                                sale.price += selectedPrint.price[selectedSize.toString()]!!
 
                                 // buy two get one free auto magic
                                 if (autoDiscount) {

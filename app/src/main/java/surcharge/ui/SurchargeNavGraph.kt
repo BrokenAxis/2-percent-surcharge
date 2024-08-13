@@ -5,6 +5,8 @@ import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +28,7 @@ import surcharge.ui.manage.EditMenu
 import surcharge.ui.pointOfSale.SalesMenu
 import surcharge.ui.review.AnalyticsScreen
 import surcharge.ui.review.ReviewScreen
+import surcharge.ui.review.SalesHistoryScreen
 import surcharge.ui.settings.DevScreen
 import surcharge.ui.settings.SettingsScreen
 
@@ -96,7 +99,8 @@ fun SurchargeNavGraph(
         ) {
             AccountScreen(
                 app = appContainer,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToLogin = { navController.navigate(SurchargeDestinations.LOGIN_ROUTE) }
             )
         }
         composable(
@@ -177,6 +181,7 @@ fun SurchargeNavGraph(
             ReviewScreen(
                 app = appContainer,
                 onNavigateToAnalytics = { navController.navigate(SurchargeDestinations.ANALYTICS_ROUTE) },
+                onNavigateToSalesHistory = { navController.navigate(SurchargeDestinations.SALES_HISTORY_ROUTE) },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -214,6 +219,42 @@ fun SurchargeNavGraph(
             AnalyticsScreen(
                 data = appContainer.data,
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = SurchargeDestinations.SALES_HISTORY_ROUTE,
+            enterTransition = {
+                fadeIn(
+                    animationSpec = tween(
+                        300, easing = LinearEasing
+                    )
+                ) + slideIntoContainer(
+                    animationSpec = tween(300, easing = EaseIn),
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    animationSpec = tween(300, easing = EaseOut),
+                    towards = AnimatedContentTransitionScope.SlideDirection.End
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                    targetOffsetX = { it / 2 }
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                    initialOffsetX = { -it / 2 }
+                )
+            }
+        ) {
+            SalesHistoryScreen(
+                app = appContainer,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(

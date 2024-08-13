@@ -68,8 +68,8 @@ class LocalData(appContext: Context): Data {
         return db.artistDao().delete(artist) == 1
     }
 
-    override suspend fun getSale(saleId: UUID): Result<Sale> = runCatching {
-        db.saleDao().getById(saleId)
+    override suspend fun getSale(saleId: String): Result<Sale> = runCatching {
+        db.saleDao().getById(UUID.fromString(saleId))
     }
 
     override suspend fun getSales(): Result<List<Sale>> = runCatching {

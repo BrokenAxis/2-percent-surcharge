@@ -7,16 +7,17 @@ import surcharge.types.BundleItem
 import surcharge.types.PrintItem
 import surcharge.types.Size
 import java.time.Instant
+import java.util.EnumMap
 
 class Converters {
     @TypeConverter
-    fun fromMutableMap(value: MutableMap<Size, Int>): String {
+    fun fromMutableMap(value: MutableMap<String, Int>): String {
         return Gson().toJson(value)
     }
 
     @TypeConverter
-    fun stringToMutableMap(value: String): MutableMap<Size, Int> {
-        val type = object : TypeToken<Map<Size, Int>>() {}.type
+    fun stringToMutableMap(value: String): MutableMap<String, Int> {
+        val type = object : TypeToken<Map<String, Int>>() {}.type
         return Gson().fromJson(value, type)
     }
 
@@ -87,5 +88,16 @@ class Converters {
     @TypeConverter
     fun stringToInstant(value: String): Instant {
         return Instant.parse(value)
+    }
+
+    @TypeConverter
+    fun fromEnumMap(value: EnumMap<Size, Int>): String {
+        return Gson().toJson(value)
+    }
+
+    @TypeConverter
+    fun stringToEnumMap(value: String): EnumMap<Size, Int> {
+        val type = object : TypeToken<EnumMap<Size, Int>>() {}.type
+        return Gson().fromJson(value, type)
     }
 }

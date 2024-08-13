@@ -48,6 +48,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
+import surcharge.data.prints.Firestore
 import surcharge.types.Bundle
 import surcharge.types.Item
 import surcharge.types.PaymentType
@@ -77,7 +78,7 @@ fun Cart(
                     cashCheckout = false
                     sale.price = total
                     scope.launch(IO) {
-                        app.settings.updateCash(app.settings.readCash() + total)
+                        (app.data as Firestore).addCashOnHand(total)
                     }
                     onCheckout(null)
                 },
@@ -313,7 +314,8 @@ fun EditDialog(
             app.data.getPrint(item.name).getOrElse { Print() }
             original = if (item is PrintItem) {
                 app.data.getPrint(item.name)
-                    .getOrElse { Print(price = mutableMapOf(item.size to 0)) }.price[item.size] ?: 0
+                    .getOrElse { Print(price = mutableMapOf(item.size.toString() to 0)) }.price[item.size.toString()]
+                    ?: 0
             } else {
                 app.data.getBundle(item.name).getOrElse { Bundle() }.price
             }

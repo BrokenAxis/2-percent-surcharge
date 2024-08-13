@@ -42,11 +42,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
+import surcharge.data.prints.Firestore
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Size
@@ -196,7 +196,7 @@ fun EditMenu(
             ElevatedCard {
                 var cash by remember { mutableStateOf("") }
                 LaunchedEffect(true) {
-                    withContext(IO) { cash = formatPrice(app.settings.readCash()) }
+                    withContext(IO) { cash = formatPrice((app.data as Firestore).getCashOnHand()) }
                 }
 
                 TextField(
@@ -219,7 +219,7 @@ fun EditMenu(
                     onClick = {
                         scope.launch {
                             withContext(IO) {
-                                app.settings.updateCash(intPrice(cash))
+                                (app.data as Firestore).updateCashOnHand(intPrice(cash))
                             }
                         }
                         viewCash = false
@@ -256,7 +256,7 @@ fun EditMenu(
 
                 val isError = remember { List(Size.entries.size) { false }.toMutableStateList() }
 
-                prices.forEachIndexed { index, price ->
+                prices.forEachIndexed { index, _ ->
                     TextField(
                         value = prices[index],
                         onValueChange = {
@@ -352,7 +352,7 @@ fun EditMenu(
                             val prints = app.data.getPrints().getOrDefault(listOf())
                             prints.forEach { print ->
                                 if (print.sizes.contains(selectedSize)) {
-                                    print.price[selectedSize] = intPrice(price)
+                                    print.price[selectedSize.toString()] = intPrice(price)
                                     app.data.editPrint(print)
                                 }
                             }

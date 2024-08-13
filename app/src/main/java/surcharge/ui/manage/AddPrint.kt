@@ -406,8 +406,8 @@ fun SizeDialog(app: AppContainer, print: Print, onConfirm: () -> Unit, onClose: 
             TextButton(
                 onClick = debounced {
                     print.sizes.forEachIndexed { index, size ->
-                        print.price[size] = intPrice(prices[index])
-                        print.stock[size] = stock[index].toInt()
+                        print.price[size.toString()] = intPrice(prices[index])
+                        print.stock[size.toString()] = stock[index].toInt()
                     }
                     onConfirm()
                 },

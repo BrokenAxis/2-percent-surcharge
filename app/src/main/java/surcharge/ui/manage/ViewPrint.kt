@@ -196,13 +196,13 @@ fun ViewPrint(
 
                     Row(Modifier.padding(10.dp)) {
                         Text(
-                            text = "$size x ${print.stock[size]}",
+                            text = "$size x ${print.stock[size.toString()]}",
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
                         Spacer(Modifier.weight(1f))
                         Text(
-                            text = "$ ${formatPrice(print.price[size] ?: 0)}",
+                            text = "$ ${formatPrice(print.price[size.toString()] ?: 0)}",
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(horizontal = 15.dp)
                         )

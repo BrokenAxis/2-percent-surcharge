@@ -2,6 +2,11 @@
     <string name="app_name">Surcharge</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="asset_statements" translatable="false">
+[{
+  \"include\": \"https://brokenartist.me/.well-known/assetlinks.json\"
+}]
+</string>
     <!-- Strings used for fragments for navigation -->
 
 </resources>

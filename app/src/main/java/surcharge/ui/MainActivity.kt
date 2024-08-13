@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import com.google.firebase.auth.FirebaseAuth
 import com.squareup.sdk.mobilepayments.MobilePaymentsSdk
 import com.squareup.sdk.mobilepayments.authorization.AuthorizeErrorCode
 import com.squareup.sdk.mobilepayments.core.CallbackReference
@@ -15,7 +16,10 @@ import kotlinx.coroutines.withContext
 import surcharge.SurchargeApplication
 import surcharge.data.AppContainer
 import surcharge.ui.theme.SurchargeTheme
+import surcharge.utils.retrofit.ApiClient
 import surcharge.utils.retrofit.Token
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -28,9 +32,18 @@ class MainActivity : ComponentActivity() {
 
         appContainer = (application as SurchargeApplication).container
 
+        val auth = FirebaseAuth.getInstance()
+
         setAuthStateCallback()
         runBlocking(IO) {
             appContainer.settings.updateIntent((intent.data ?: "").toString())
+
+            if (Instant.now().minus(7, ChronoUnit.DAYS)
+                    .isAfter(appContainer.settings.readLastRefresh())
+            ) {
+                refreshToken(appContainer.settings.readSquareAccessToken())
+                appContainer.settings.resetLastRefresh()
+            }
         }
 
         setContent {
@@ -39,10 +52,11 @@ class MainActivity : ComponentActivity() {
                     appContainer.theme.intValue = appContainer.settings.readTheme()
                 }
             }
-            val start = when (appContainer.squareAuthState) {
+            val start = when (auth.currentUser != null) {
                 true -> SurchargeDestinations.HOME_ROUTE
                 false -> SurchargeDestinations.LOGIN_ROUTE
             }
+
             SurchargeTheme(appContainer.theme.intValue) {
                 SurchargeApp(appContainer, start)
             }
@@ -50,6 +64,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setAuthStateCallback() {
+        appContainer.squareAuthState =
+            MobilePaymentsSdk.authorizationManager().authorizationState.isAuthorized
         authStateReference = MobilePaymentsSdk.authorizationManager()
             .setAuthorizationStateChangedCallback { authState ->
                 appContainer.squareAuthState = authState.isAuthorized
@@ -80,16 +96,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun refreshToken(accessToken: Token) {
+        if (Instant.now().isBefore(Instant.parse(accessToken.refreshTokenExpiresAt))) {
+            runBlocking(IO) {
+                ApiClient.squareApi.refreshToken(
+                    clientID = appContainer.squareId,
+                    refreshToken = accessToken.refreshToken
+                )
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
 
         setAuthStateCallback()
 
-        var accessToken: Token
-        runBlocking(IO) {
-            accessToken = appContainer.settings.readSquareAccessToken()
-        }
         if (!appContainer.squareAuthState) {
+            var accessToken: Token
+            runBlocking(IO) {
+                accessToken = appContainer.settings.readSquareAccessToken()
+            }
             authorize(accessToken.accessToken)
         }
     }

@@ -11,7 +11,7 @@ import java.util.UUID
 
 fun handleCardCheckout(
     total: Int,
-    saleId: UUID,
+    saleId: String,
     onSuccess: (Payment?) -> Unit,
     onError: (String) -> Unit
 ) {
@@ -20,7 +20,7 @@ fun handleCardCheckout(
         amount = Money(total.toLong(), CurrencyCode.AUD),
         idempotencyKey = UUID.randomUUID().toString() // todo store this
     )
-        .referenceId(saleId.toString())
+        .referenceId(saleId)
         .build()
     val paymentHandle = paymentManager.startPaymentActivity(
         paymentParameters = paymentParameters,

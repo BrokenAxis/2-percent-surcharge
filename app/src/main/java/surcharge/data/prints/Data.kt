@@ -4,7 +4,6 @@ import surcharge.types.Artist
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Sale
-import java.util.UUID
 
 interface Data {
     suspend fun getPrint(name: String): Result<Print>
@@ -21,7 +20,7 @@ interface Data {
     suspend fun getArtists(): Result<List<Artist>>
     suspend fun addArtist(artist: Artist)
     suspend fun deleteArtist(artist: Artist): Boolean
-    suspend fun getSale(saleId: UUID): Result<Sale>
+    suspend fun getSale(saleId: String): Result<Sale>
     suspend fun getSales(): Result<List<Sale>>
     suspend fun addSale(sale: Sale)
     suspend fun deleteSale(sale: Sale): Boolean

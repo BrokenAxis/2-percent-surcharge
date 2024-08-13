@@ -26,8 +26,8 @@ class TestData {
         "Chainsaw Man",
         "https://jongjeh.vercel.app/_image?href=%2F_astro%2FAsaAndYoru.6d6ffc83.jpg&f=webp",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Matthew"
     )
 
@@ -36,8 +36,8 @@ class TestData {
         "The Legend of Zelda",
         "https://jongjeh.vercel.app/_image?href=%2F_astro%2Fof+the+wild.a8b65806.jpg&f=webp",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Matthew"
     )
 
@@ -46,8 +46,8 @@ class TestData {
         "Chainsaw Man",
         "https://jongjeh.vercel.app/_image?href=%2F_astro%2FQuanxi.2819ef9d.png&f=webp",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Matthew"
     )
 
@@ -56,8 +56,8 @@ class TestData {
         "Suzume",
         "https://jongjeh.vercel.app/_image?href=%2F_astro%2Fdaijin.92ac5ad6.jpg&f=webp",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Matthew"
     )
 
@@ -66,8 +66,8 @@ class TestData {
         "Spiderverse",
         "https://res.cloudinary.com/domzlxwcp/image/upload/v1701323925/prints/the%20spot.jpg",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Vincent"
     )
 
@@ -76,8 +76,8 @@ class TestData {
         "Chainsaw Man",
         "https://res.cloudinary.com/domzlxwcp/image/upload/v1701324151/prints/angel%20devil.jpg",
         listOf(Size.A5, Size.A3),
-        mutableMapOf(Size.A5 to 10, Size.A3 to 5),
-        mutableMapOf(Size.A5 to 3000, Size.A3 to 5000),
+        mutableMapOf(Size.A5.toString() to 10, Size.A3.toString() to 5),
+        mutableMapOf(Size.A5.toString() to 3000, Size.A3.toString() to 5000),
         "Vincent"
     )
 
@@ -102,7 +102,10 @@ class TestData {
             createPrintItem(asa, Size.A5, 2),
             createPrintItem(spot, Size.A5, 2),
         ),
-        price = asa.price.getOrDefault(Size.A5, 0) * 2 + spot.price.getOrDefault(Size.A5, 0) * 2,
+        price = asa.price.getOrDefault(
+            Size.A5.toString(),
+            0
+        ) * 2 + spot.price.getOrDefault(Size.A5.toString(), 0) * 2,
         paymentType = PaymentType.CARD,
         comment = "hi there"
     )

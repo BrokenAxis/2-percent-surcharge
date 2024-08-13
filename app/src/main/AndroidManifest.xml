@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
+
     <queries>
         <package android:name="com.squareup" />
     </queries>
@@ -30,6 +31,7 @@
         android:theme="@style/Theme.Surcharge"
         tools:replace="android:fullBackupContent"
         tools:targetApi="31">
+
         <activity
             android:name="surcharge.ui.MainActivity"
             android:exported="true"
@@ -49,6 +51,10 @@
                 <data android:pathPattern="/square" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
 
         <meta-data
             android:name="CLOUDINARY_URL"

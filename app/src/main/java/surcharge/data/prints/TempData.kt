@@ -4,7 +4,6 @@ import surcharge.types.Artist
 import surcharge.types.Bundle
 import surcharge.types.Print
 import surcharge.types.Sale
-import java.util.UUID
 
 // Data Interface for testing purposes
 class TempData: Data {
@@ -79,7 +78,7 @@ class TempData: Data {
         return true
     }
 
-    override suspend fun getSale(saleId: UUID): Result<Sale> {
+    override suspend fun getSale(saleId: String): Result<Sale> {
         return Result.success(data.sales.find { it.saleId == saleId } ?: Sale())
     }
 

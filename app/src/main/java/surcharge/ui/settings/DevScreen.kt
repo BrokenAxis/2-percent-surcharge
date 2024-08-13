@@ -43,7 +43,6 @@ import surcharge.types.Print
 import surcharge.types.Sale
 import surcharge.utils.components.Tile
 import surcharge.utils.formatPrice
-import surcharge.utils.formatTime
 import surcharge.utils.gson
 
 
@@ -233,13 +232,35 @@ fun DevScreen(
 
                 if (path != null) {
                     val file = context.contentResolver.openOutputStream(path)
-                    file?.write("saleId,prints,bundles,price,payment type,comment,time\n".toByteArray())
+                    file?.write("saleId,item,size,quantity,artist,price\n".toByteArray())
                     sales.forEach { sale ->
-                        val row =
-                            "${sale.saleId},\"${sale.prints.map { "${it.name} x ${it.quantity}" }}\",\"${sale.bundles.map { "${it.name} x ${it.quantity}: " + it.prints.map { print -> "${print.name} x ${print.quantity}" } }}\",${
-                                formatPrice(sale.price)
-                            },${sale.paymentType},\"${sale.comment}\",\"${formatTime(sale.time)}\"\n"
-                        file?.write(row.toByteArray())
+                        // export per print
+                        sale.bundles.forEach { bundle ->
+                            bundle.prints.forEach { print ->
+                                val row =
+                                    "${sale.saleId},${print.name},${print.size},${print.quantity},${print.artist},${
+                                        formatPrice(print.price)
+                                    }\n"
+                                file?.write(row.toByteArray())
+                            }
+                            val row =
+                                "${sale.saleId},${bundle.name},\"\",\"\",\"\",${formatPrice(bundle.price - bundle.prints.sumOf { it.price * it.quantity })}\n"
+                            file?.write(row.toByteArray())
+                        }
+                        sale.prints.forEach { print ->
+                            val row =
+                                "${sale.saleId},${print.name},${print.size},${print.quantity},${print.artist},${
+                                    formatPrice(print.price)
+                                }\n"
+                            file?.write(row.toByteArray())
+                        }
+                        // export per sale
+//                        file?.write("saleId,item,size,quantity,price,payment type,comment,time\n".toByteArray())
+//                        val row =
+//                            "${sale.saleId},\"${sale.prints.map { "${it.name} x ${it.quantity}" }}\",\"${sale.bundles.map { "${it.name} x ${it.quantity}: " + it.prints.map { print -> "${print.name} x ${print.quantity}" } }}\",${
+//                                formatPrice(sale.price)
+//                            },${sale.paymentType},\"${sale.comment}\",\"${formatTime(sale.time)}\"\n"
+//                        file?.write(row.toByteArray())
                     }
                     file?.close()
                 }

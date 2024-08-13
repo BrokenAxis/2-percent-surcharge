@@ -14,6 +14,7 @@ import surcharge.types.emptyPriceMap
 import surcharge.utils.retrofit.Location
 import surcharge.utils.retrofit.Token
 import surcharge.utils.retrofit.generateCsrfToken
+import java.time.Instant
 import java.util.UUID
 
 class SettingsDataStore(private val context: Context) {
@@ -29,6 +30,8 @@ class SettingsDataStore(private val context: Context) {
     private val csrfKey = stringPreferencesKey("csrf")
     private val locationKey = stringPreferencesKey("location")
     private val alternateSaleKey = booleanPreferencesKey("alternateSale")
+    private val lastRefreshKey = stringPreferencesKey("lastRefresh")
+    private val groupKey = stringPreferencesKey("group")
 
     suspend fun readUniqueId(): String {
         if (context.dataStore.data.first()[uniqueIdKey] == null) {
@@ -149,6 +152,26 @@ class SettingsDataStore(private val context: Context) {
     suspend fun updateAlternateSale(alternateSale: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[alternateSaleKey] = alternateSale
+        }
+    }
+
+    suspend fun readLastRefresh(): Instant {
+        return Instant.parse(context.dataStore.data.first()[lastRefreshKey] ?: return Instant.now())
+    }
+
+    suspend fun resetLastRefresh() {
+        context.dataStore.edit { preferences ->
+            preferences[lastRefreshKey] = Instant.now().toString()
+        }
+    }
+
+    suspend fun readGroup(): String {
+        return context.dataStore.data.first()[groupKey] ?: ""
+    }
+
+    suspend fun updateGroup(group: String) {
+        context.dataStore.edit { preferences ->
+            preferences[groupKey] = group
         }
     }
 }

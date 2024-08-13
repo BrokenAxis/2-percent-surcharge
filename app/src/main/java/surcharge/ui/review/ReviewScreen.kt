@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AllInbox
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Card
@@ -54,6 +53,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import surcharge.data.AppContainer
+import surcharge.data.prints.Firestore
 import surcharge.types.Artist
 import surcharge.types.Sale
 import surcharge.utils.altArtistTotal
@@ -62,12 +62,14 @@ import surcharge.utils.components.Tile
 import surcharge.utils.components.gallery.PrintImage
 import surcharge.utils.formatPrice
 import surcharge.utils.formatTime
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
     app: AppContainer,
     onNavigateToAnalytics: () -> Unit = {},
+    onNavigateToSalesHistory: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -96,12 +98,14 @@ fun ReviewScreen(
         ) {
             var refresh by remember { mutableIntStateOf(0) }
             var artists by remember { mutableStateOf(listOf<Artist>()) }
+            var recentSales by remember { mutableStateOf(listOf<Sale>()) }
             var sales by remember { mutableStateOf(listOf<Sale>()) }
             var alternateSale by remember { mutableStateOf(false) }
             LaunchedEffect(refresh) {
                 withContext(IO) {
                     artists = app.data.getArtists().getOrDefault(listOf())
-                    sales = app.data.getSales().getOrDefault(listOf())
+                    recentSales = (app.data as Firestore).getRecentSales(5).getOrDefault(listOf())
+                    sales = (app.data as Firestore).getSales().getOrDefault(listOf())
                     alternateSale = app.settings.readAlternateSale()
                 }
             }
@@ -197,14 +201,23 @@ fun ReviewScreen(
                 onClick = onNavigateToAnalytics
             )
 
-            Tile(
-                title = "Stock",
-                subtitle = "review stock, cash on hand",
-                icon = Icons.Filled.AllInbox,
-                onClick = {}
-            )
+//            Tile(
+//                title = "Stock",
+//                subtitle = "review stock, cash on hand",
+//                icon = Icons.Filled.AllInbox,
+//                onClick = {}
+//            )
 
-            Text("Recent Transactions", style = MaterialTheme.typography.headlineSmall)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Recent Transactions", style = MaterialTheme.typography.headlineSmall)
+                TextButton(onClick = { onNavigateToSalesHistory() }) {
+                    Text(text = "See all")
+                }
+            }
+
             Spacer(Modifier.height(10.dp))
             Column(
                 modifier = Modifier
@@ -212,7 +225,7 @@ fun ReviewScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                sales.forEach {
+                recentSales.forEach {
                     TransactionCard(
                         sale = it,
                         onClick = {
@@ -242,8 +255,14 @@ fun TransactionCard(sale: Sale, onClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "${item.quantity}x ${item.name}")
-                    Text(text = "$${formatPrice(item.price * item.quantity)}")
+                    Text(
+                        text = "${item.quantity}x ${item.name}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "$${formatPrice(item.price * item.quantity)}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
 
                 Spacer(Modifier.height(5.dp))
@@ -260,8 +279,14 @@ fun TransactionCard(sale: Sale, onClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "${item.quantity}x ${item.name} - ${item.size}")
-                    Text(text = "$${formatPrice(item.price * item.quantity)}")
+                    Text(
+                        text = "${item.quantity}x ${item.name} - ${item.size}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "$${formatPrice(item.price * item.quantity)}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
                 Spacer(Modifier.height(5.dp))
             }
@@ -272,7 +297,7 @@ fun TransactionCard(sale: Sale, onClick: () -> Unit) {
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = "${sale.paymentType} on ${formatTime(sale.time)}",
+                    text = "${sale.paymentType} on ${formatTime(Instant.parse(sale.time))}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )

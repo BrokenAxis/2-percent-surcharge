@@ -50,6 +50,19 @@ data class Address(
     @SerializedName("country") val country: String = ""
 )
 
+data class Merchant(
+    @SerializedName("id") val merchantID: String = "",
+    @SerializedName("business_name") val businessName: String = "",
+    @SerializedName("country") val country: String = "",
+    @SerializedName("status") val status: String = "",
+    @SerializedName("main_location_id") val mainLocationID: String = "",
+    @SerializedName("created_at") val createdAt: String = "",
+)
+
+data class RevokeResponse(
+    @SerializedName("success") val success: Boolean = false
+)
+
 data class Error(
     @SerializedName("error") val error: String = "",
     @SerializedName("error_description") val errorDescription: String = ""
@@ -77,7 +90,7 @@ fun generateCodeChallenge(codeVerifier: String): String {
 object RetrofitClient {
     private const val BASE_URL = "https://connect.squareup.com/"
     const val PERMS =
-        "MERCHANT_PROFILE_READ PAYMENTS_WRITE PAYMENTS_WRITE_IN_PERSON PAYMENTS_WRITE_ADDITIONAL_RECIPIENTS"
+        "MERCHANT_PROFILE_READ PAYMENTS_WRITE PAYMENTS_WRITE_IN_PERSON PAYMENTS_WRITE_ADDITIONAL_RECIPIENTS ORDERS_READ ORDERS_WRITE"
     const val REDIRECT_URL = "https://brokenartist.me/square"
 
     val retrofit: Retrofit by lazy {
@@ -105,12 +118,25 @@ interface SquareApi {
     @POST("oauth2/token")
     suspend fun getToken(
         @Query("client_id") clientID: String,
-        @Query("grant_type") grantType: String,
+        @Query("grant_type") grantType: String = "authorization_code",
         @Query("redirect_uri") redirectUrl: String,
         @Query("code") code: String,
         @Query("code_verifier") codeVerifier: String
     ): Response<Token>
 
+    @POST("oauth2/token")
+    suspend fun refreshToken(
+        @Query("client_id") clientID: String,
+        @Query("grant_type") grantType: String = "refresh_token",
+        @Query("refresh_token") refreshToken: String
+    ): Response<Token>
+
+    @POST("oauth2/revoke")
+    suspend fun revokeToken(
+        @Header("Authorization") secret: String,
+        @Query("access_token") token: String,
+        @Query("client_id") clientID: String
+    ): Response<RevokeResponse>
     /**
      * Get the merchant's location by ID.
      */
@@ -127,4 +153,10 @@ interface SquareApi {
     suspend fun getLocation(
         @Header("Authorization") token: String,
     ): Response<LocationResponse>
+
+    @GET("v2/merchants")
+    suspend fun getMerchant(
+        @Header("Authorization") token: String,
+        @Query("location_id") locationID: String
+    ): Response<Merchant>
 }

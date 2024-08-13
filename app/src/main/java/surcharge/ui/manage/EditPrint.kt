@@ -112,8 +112,8 @@ fun EditPrint(
         TextButton(
             onClick = {
                 print.sizes.forEachIndexed { index, size ->
-                    print.price[size] = intPrice(prices[index])
-                    print.stock[size] = stock[index].toInt()
+                    print.price[size.toString()] = intPrice(prices[index])
+                    print.stock[size.toString()] = stock[index].toInt()
                 }
 
                 onConfirm()

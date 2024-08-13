@@ -1,12 +1,7 @@
 package surcharge.utils.components.gallery
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -140,12 +135,13 @@ fun TabGallery(
 fun PrintImage(
     url: String,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit,
+    size: Size = Size.ORIGINAL
 ) {
     val painter = rememberAsyncImagePainter(
         model = ImageRequest.Builder(LocalContext.current)
             .data(url)
-            .size(Size.ORIGINAL)
+            .size(size)
             .build(),
         contentScale = ContentScale.Fit
     )
@@ -175,17 +171,18 @@ fun PrintImage(
     val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
-        enter = slideInVertically {
-            // Slide in from 40 dp from the top.
-            with(density) { -40.dp.roundToPx() }
-        } + expandVertically(
-            // Expand from the top.
-            expandFrom = Alignment.Top
-        ) + fadeIn(
-            // Fade in with the initial alpha of 0.3f.
-            initialAlpha = 0.3f
-        ),
-        exit = slideOutVertically() + shrinkVertically() + fadeOut()
+        enter = fadeIn()
+//        enter = slideInVertically {
+//            // Slide in from 40 dp from the top.
+//            with(density) { -40.dp.roundToPx() }
+//        } + expandVertically(
+//            // Expand from the top.
+//            expandFrom = Alignment.Top
+//        ) + fadeIn(
+//            // Fade in with the initial alpha of 0.3f.
+//            initialAlpha = 0.3f
+//        ),
+//        exit = slideOutVertically() + shrinkVertically() + fadeOut()
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -262,6 +259,77 @@ fun Gallery(
         }
     }
 }
+
+//@Composable
+//fun Gallery(
+//    prints: List<Print>? = null,
+//    printOnClick: (print: Print) -> Unit= {},
+//    bundles: List<Bundle>? = null,
+//    bundleOnClick: (bundle: Bundle) -> Unit = {}
+//) {
+//    val items = prints ?: bundles
+//    val numColumns = 3 // Adjust as needed
+//    Row(
+//        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+//        horizontalArrangement = Arrangement.spacedBy(5.dp)
+//    ) {
+//        items?.chunked((items.size / numColumns + 1))?.forEach { rowItems ->
+//            Column(
+//                modifier = Modifier.weight(1f),
+//                verticalArrangement = Arrangement.spacedBy(5.dp)
+//            ) {
+//                rowItems.forEach { item ->
+//                    when (item) {
+//                        is Print -> {
+//                            Card(
+//                                onClick = debounced { printOnClick(item) },
+//                                modifier = Modifier,
+//                                colors = CardDefaults.cardColors(
+//                                    MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+//                                )
+//                            ) {
+//                                Card(
+//                                    modifier = Modifier.fillMaxWidth(),
+//                                    colors = CardDefaults.cardColors(Color.Transparent)
+//                                ) {
+//                                    PrintImage(item.url)
+//                                }
+//
+//                                Text(
+//                                    item.name,
+//                                    Modifier.padding(10.dp),
+//                                    style = MaterialTheme.typography.titleMedium
+//                                )
+//                            }
+//                        }
+//
+//                        is Bundle -> {
+//                            Card(
+//                                onClick = debounced { bundleOnClick(item) },
+//                                modifier = Modifier.weight(1f),
+//                                colors = CardDefaults.cardColors(
+//                                    MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+//                                )
+//                            ) {
+//                                Card(
+//                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+//                                    colors = CardDefaults.cardColors(Color.Transparent)
+//                                ) {
+//                                    PrintImage(item.prints[0].url)
+//                                }
+//                                Text(
+//                                    item.name,
+//                                    Modifier.padding(10.dp),
+//                                    style = MaterialTheme.typography.labelLarge
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 @Preview
 @Composable

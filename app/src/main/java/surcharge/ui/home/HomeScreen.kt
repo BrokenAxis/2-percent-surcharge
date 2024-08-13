@@ -19,6 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -26,14 +28,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import surcharge.data.AppContainer
 import surcharge.utils.debounce.debounced
 import surcharge.utils.retrofit.Location
+import surcharge.utils.square.handleOAuth
 
 @Composable
 fun HomeScreen(
@@ -44,7 +51,31 @@ fun HomeScreen(
     onNavigateToSales: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
-    Scaffold { innerPadding ->
+    val snackbarHostState = remember { SnackbarHostState() }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        val scope = rememberCoroutineScope()
+        var intent by remember { mutableStateOf("") }
+        LaunchedEffect(true) {
+            intent = app.settings.readIntent()
+            if (intent.isNotEmpty()) {
+                handleOAuth(
+                    intent = intent,
+                    csrf = app.settings.readCsrf(),
+                    scope = scope,
+                    snackbarHostState = snackbarHostState,
+                    onSuccess = { token, location ->
+                        scope.launch(IO) {
+                            app.settings.updateSquareAccessToken(token)
+                            app.settings.updateLocation(location)
+                            app.settings.refreshCsrf()
+                        }
+                    }
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -95,7 +126,7 @@ fun HomeScreen(
                         }
 
                         Text(
-                            "$user | ${location.locationName}",
+                            "${FirebaseAuth.getInstance().currentUser?.displayName ?: "Unknown"} | ${location.locationName}",
                             style = MaterialTheme.typography.titleLarge
                         )
                         Icon(Icons.Filled.AccountCircle, "Account")

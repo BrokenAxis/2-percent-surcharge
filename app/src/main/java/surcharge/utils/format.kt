@@ -42,6 +42,11 @@ fun formatTime(timestamp: Instant): String {
     return formatter.format(timestamp)
 }
 
+fun formatDate(timestamp: Instant): String {
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault())
+    return formatter.format(timestamp)
+}
+
 fun quantity(sale: Sale): Int {
     return sale.prints.sumOf { it.quantity } + sale.bundles.sumOf { it.quantity }
 }

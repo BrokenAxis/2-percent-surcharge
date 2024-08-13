@@ -22,8 +22,8 @@ data class Print(
     var property: String = "",
     var url: String = "",
     var sizes: List<Size> = listOf(),
-    var stock: MutableMap<Size, Int> = mutableMapOf(),
-    var price: MutableMap<Size, Int> = mutableMapOf(),
+    var stock: MutableMap<String, Int> = mutableMapOf(),
+    var price: MutableMap<String, Int> = mutableMapOf(),
     var artist: String = ""
 )
 
@@ -50,7 +50,7 @@ fun createPrintItem(print: Print, size: Size, quantity: Int = 1, price: Int? = n
         print.url,
         size,
         quantity,
-        price?: print.price[size]!!, // TODO sussy
+        price ?: print.price[size.toString()]!!, // TODO sussy
         print.artist
     )
 }
@@ -94,11 +94,24 @@ enum class PaymentType {
 
 @Entity
 data class Sale(
-    @PrimaryKey val saleId: UUID = UUID.randomUUID(),
+    @PrimaryKey val saleId: String = UUID.randomUUID().toString(),
     var prints: ArrayList<PrintItem> = arrayListOf(),
     var bundles: ArrayList<BundleItem> = arrayListOf(),
     var price: Int = 0,
     var paymentType: PaymentType = PaymentType.CASH,
     var comment: String = "",
-    var time: Instant = Instant.now()
+    var time: String = Instant.now().toString()
+)
+
+data class Group(
+    val groupId: String = "",
+    val name: String = "",
+    val owner: String = ""
+)
+
+data class User(
+    val userId: String = "",
+    val name: String = "",
+    val email: String = ""
+
 )

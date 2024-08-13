@@ -69,7 +69,11 @@ interface SaleDao : BaseDao<Sale> {
     fun getById(saleId: UUID): Sale
 }
 
-@Database(entities = [Print::class, Bundle::class, Artist::class, Sale::class], version = 4)
+@Database(
+    entities = [Print::class, Bundle::class, Artist::class, Sale::class],
+    version = 4,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun printDao(): PrintDao

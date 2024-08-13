@@ -17,6 +17,7 @@ output.json
 
 # Releases
 /app/release/
+app/release/app-release.aab
 
 # IntelliJ
 *.iml
