@@ -21,7 +21,10 @@ import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,9 +35,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,9 +65,11 @@ import surcharge.utils.altArtistTotal
 import surcharge.utils.artistTotal
 import surcharge.utils.components.Tile
 import surcharge.utils.components.gallery.PrintImage
+import surcharge.utils.formatDate
 import surcharge.utils.formatPrice
 import surcharge.utils.formatTime
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,12 +108,17 @@ fun ReviewScreen(
             var recentSales by remember { mutableStateOf(listOf<Sale>()) }
             var sales by remember { mutableStateOf(listOf<Sale>()) }
             var alternateSale by remember { mutableStateOf(false) }
+            var dateStart by remember { mutableStateOf(Instant.MIN) }
+            var dateEnd by remember { mutableStateOf(Instant.MAX) }
+
             LaunchedEffect(refresh) {
                 withContext(IO) {
                     artists = app.data.getArtists().getOrDefault(listOf())
                     recentSales = (app.data as Firestore).getRecentSales(5).getOrDefault(listOf())
                     sales = (app.data as Firestore).getSales().getOrDefault(listOf())
                     alternateSale = app.settings.readAlternateSale()
+                    dateStart = app.settings.readDateStart()
+                    dateEnd = app.settings.readDateEnd()
                 }
             }
             val scope = rememberCoroutineScope()
@@ -147,6 +159,78 @@ fun ReviewScreen(
 
             val horizontalScroll = rememberScrollState()
 
+            var openDateRangePickerDialog by remember { mutableStateOf(false) }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (dateStart != Instant.MIN && dateEnd != Instant.MAX) {
+                    Text(
+                        text = "${formatDate(dateStart)} - ${formatDate(dateEnd)}",
+                        modifier = Modifier.padding(20.dp)
+                    )
+                } else {
+                    Text(
+                        text = "No Date Range Set",
+                        modifier = Modifier.padding(20.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                FilledTonalButton(
+                    onClick = { openDateRangePickerDialog = true },
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text("Choose Date Range")
+                }
+            }
+
+            if (openDateRangePickerDialog) {
+                val dateRangePickerState = rememberDateRangePickerState(
+                    initialSelectedStartDateMillis = if (dateStart == Instant.MIN) null else dateStart.toEpochMilli(),
+                    initialSelectedEndDateMillis = if (dateEnd == Instant.MAX) null else dateEnd.toEpochMilli()
+                )
+                val confirmEnabled = remember {
+                    derivedStateOf { dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null }
+                }
+                DatePickerDialog(
+                    onDismissRequest = {
+                        openDateRangePickerDialog = false
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                openDateRangePickerDialog = false
+                                dateStart =
+                                    Instant.ofEpochMilli(dateRangePickerState.selectedStartDateMillis!!)
+                                dateEnd =
+                                    Instant.ofEpochMilli(dateRangePickerState.selectedEndDateMillis!!)
+                                        .plus(1, ChronoUnit.DAYS)
+                                scope.launch {
+                                    app.settings.updateDateStart(dateStart)
+                                    app.settings.updateDateEnd(dateEnd)
+                                }
+                                refresh++
+                            },
+                            enabled = confirmEnabled.value
+                        ) {
+                            Text("Confirm")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            openDateRangePickerDialog = false
+                        }) { Text("Cancel") }
+                    }
+                ) {
+                    DateRangePicker(
+                        state = dateRangePickerState
+                    )
+                }
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -183,10 +267,28 @@ fun ReviewScreen(
                             Spacer(Modifier.height(20.dp))
 
                             if (alternateSale) Text(
-                                text = "$${formatPrice(altArtistTotal(sales, artist))}",
+                                text = "$${
+                                    formatPrice(
+                                        altArtistTotal(
+                                            sales,
+                                            artist,
+                                            dateStart,
+                                            dateEnd
+                                        )
+                                    )
+                                }",
                                 style = MaterialTheme.typography.displayMedium
                             ) else Text(
-                                text = "$${formatPrice(artistTotal(sales, artist))}",
+                                text = "$${
+                                    formatPrice(
+                                        artistTotal(
+                                            sales,
+                                            artist,
+                                            dateStart,
+                                            dateEnd
+                                        )
+                                    )
+                                }",
                                 style = MaterialTheme.typography.displayMedium
                             )
                         }

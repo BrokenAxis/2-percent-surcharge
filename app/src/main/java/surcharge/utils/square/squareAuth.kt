@@ -90,6 +90,10 @@ suspend fun handleOAuth(
                                     AuthorizeErrorCode.USAGE_ERROR -> scope.launch(IO) {
                                         snackbarHostState.showSnackbar(result.errorMessage)
                                     }
+//
+//                                    AuthorizeErrorCode.UNSUPPORTED_COUNTRY -> scope.launch(IO) {
+//                                        snackbarHostState.showSnackbar(result.errorMessage + "... Wait how did you get into a different country")
+//                                    }
                                 }
                             }
                         }

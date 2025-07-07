@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,8 +63,9 @@ import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shape.Shape
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import surcharge.data.prints.Data
+import surcharge.data.AppContainer
 import surcharge.data.prints.Firestore
 import surcharge.types.Artist
 import surcharge.types.Sale
@@ -78,7 +80,7 @@ import java.time.temporal.ChronoUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
-    data: Data,
+    app: AppContainer,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -129,10 +131,14 @@ fun AnalyticsScreen(
             var dateStart by remember { mutableStateOf(Instant.MIN) }
             var dateEnd by remember { mutableStateOf(Instant.MAX) }
             var refreshData by remember { mutableIntStateOf(0) }
+            val scope = rememberCoroutineScope()
 
             LaunchedEffect(true) {
-                sales = (data as Firestore).getCachedSales().getOrDefault(listOf())
-                artists = data.getArtists().getOrDefault(listOf())
+                sales = (app.data as Firestore).getCachedSales().getOrDefault(listOf())
+                artists = app.data.getArtists().getOrDefault(listOf())
+                dateStart = app.settings.readDateStart()
+                dateEnd = app.settings.readDateEnd()
+
                 selectedArtists = artists
                 refreshData++
             }
@@ -371,8 +377,8 @@ fun AnalyticsScreen(
 
             if (openDateRangePickerDialog) {
                 val dateRangePickerState = rememberDateRangePickerState(
-                    initialSelectedStartDateMillis = 1721397600000,
-                    initialSelectedEndDateMillis = 1721484000000
+                    initialSelectedStartDateMillis = if (dateStart == Instant.MIN) null else dateStart.toEpochMilli(),
+                    initialSelectedEndDateMillis = if (dateEnd == Instant.MAX) null else dateEnd.toEpochMilli()
                 )
                 val confirmEnabled = remember {
                     derivedStateOf { dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null }
@@ -390,6 +396,10 @@ fun AnalyticsScreen(
                                 dateEnd =
                                     Instant.ofEpochMilli(dateRangePickerState.selectedEndDateMillis!!)
                                         .plus(1, ChronoUnit.DAYS)
+                                scope.launch {
+                                    app.settings.updateDateStart(dateStart)
+                                    app.settings.updateDateEnd(dateEnd)
+                                }
                                 refreshData++
                             },
                             enabled = confirmEnabled.value

@@ -21,8 +21,8 @@ import java.time.Instant
 class Firestore(settingsDataStore: SettingsDataStore) : Data {
     private val db = Firebase.firestore
     private val settings = settingsDataStore
-    private lateinit var groupID: String
-    private lateinit var groupDB: DocumentReference
+    private var groupID: String
+    private var groupDB: DocumentReference
 
     init {
         db.persistentCacheIndexManager?.enableIndexAutoCreation()

@@ -51,8 +51,18 @@ fun quantity(sale: Sale): Int {
     return sale.prints.sumOf { it.quantity } + sale.bundles.sumOf { it.quantity }
 }
 
-fun artistTotal(sales: List<Sale>, artist: Artist): Int {
-    return sales.sumOf { sale ->
+fun artistTotal(
+    sales: List<Sale>,
+    artist: Artist,
+    dateStart: Instant? = Instant.MIN,
+    dateEnd: Instant? = Instant.MAX
+): Int {
+    val selectedSales = sales.filter { sale ->
+        val time = Instant.parse(sale.time)
+        time.isAfter(dateStart) && time.isBefore(dateEnd)
+    }
+
+    return selectedSales.sumOf { sale ->
         sale.prints.sumOf {
             if (it.artist == artist.name) it.price * it.quantity
             else 0
@@ -68,8 +78,18 @@ fun artistTotal(sales: List<Sale>, artist: Artist): Int {
 /**
  * Split sales by using total sale amount rather than considering bundle discounts separately
  */
-fun altArtistTotal(sales: List<Sale>, artist: Artist): Int {
-    return sales.sumOf { sale ->
+fun altArtistTotal(
+    sales: List<Sale>,
+    artist: Artist,
+    dateStart: Instant? = Instant.MIN,
+    dateEnd: Instant? = Instant.MAX
+): Int {
+    val selectedSales = sales.filter { sale ->
+        val time = Instant.parse(sale.time)
+        time.isAfter(dateStart) && time.isBefore(dateEnd)
+    }
+
+    return selectedSales.sumOf { sale ->
         val artistEarningsInSale = sale.prints.filter { it.artist == artist.name }
             .sumOf { it.price * it.quantity } +
                 sale.bundles.sumOf { bundle ->

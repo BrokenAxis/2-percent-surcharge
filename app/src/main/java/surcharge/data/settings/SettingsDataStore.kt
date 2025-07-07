@@ -32,6 +32,8 @@ class SettingsDataStore(private val context: Context) {
     private val alternateSaleKey = booleanPreferencesKey("alternateSale")
     private val lastRefreshKey = stringPreferencesKey("lastRefresh")
     private val groupKey = stringPreferencesKey("group")
+    private val dateStartKey = stringPreferencesKey("dateStart")
+    private val dateEndKey = stringPreferencesKey("dateEnd")
 
     suspend fun readUniqueId(): String {
         if (context.dataStore.data.first()[uniqueIdKey] == null) {
@@ -172,6 +174,26 @@ class SettingsDataStore(private val context: Context) {
     suspend fun updateGroup(group: String) {
         context.dataStore.edit { preferences ->
             preferences[groupKey] = group
+        }
+    }
+
+    suspend fun readDateStart(): Instant {
+        return Instant.parse(context.dataStore.data.first()[dateStartKey] ?: return Instant.MIN)
+    }
+
+    suspend fun updateDateStart(dateStart: Instant) {
+        context.dataStore.edit { preferences ->
+            preferences[dateStartKey] = dateStart.toString()
+        }
+    }
+
+    suspend fun readDateEnd(): Instant {
+        return Instant.parse(context.dataStore.data.first()[dateEndKey] ?: return Instant.MAX)
+    }
+
+    suspend fun updateDateEnd(dateEnd: Instant) {
+        context.dataStore.edit { preferences ->
+            preferences[dateEndKey] = dateEnd.toString()
         }
     }
 }

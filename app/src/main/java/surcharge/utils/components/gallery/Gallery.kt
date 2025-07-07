@@ -35,9 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +45,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import coil.size.Dimension
 import coil.size.Size
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -143,7 +144,8 @@ fun PrintImage(
             .data(url)
             .size(size)
             .build(),
-        contentScale = ContentScale.Fit
+        contentScale = ContentScale.Fit,
+        filterQuality = FilterQuality.None
     )
     var visible by remember { mutableStateOf(true) }
 
@@ -168,7 +170,7 @@ fun PrintImage(
         }
     }
 
-    val density = LocalDensity.current
+//    val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn()
@@ -191,7 +193,8 @@ fun PrintImage(
                 .build(),
             contentScale = contentScale,
             contentDescription = null,
-            modifier = modifier
+            modifier = modifier,
+            filterQuality = FilterQuality.None
         )
     }
 
@@ -225,7 +228,7 @@ fun Gallery(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         colors = CardDefaults.cardColors(Color.Transparent)
                     ) {
-                        PrintImage(prints[index].url)
+                        PrintImage(prints[index].url, size = Size(130, Dimension.Undefined))
                     }
 
                     Text(
@@ -247,7 +250,10 @@ fun Gallery(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         colors = CardDefaults.cardColors(Color.Transparent)
                     ) {
-                        PrintImage(bundles[index].prints[0].url)
+                        PrintImage(
+                            bundles[index].prints[0].url,
+                            size = Size(130, Dimension.Undefined)
+                        )
                     }
                     Text(
                         bundles[index].name,

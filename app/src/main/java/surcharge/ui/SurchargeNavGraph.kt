@@ -217,7 +217,7 @@ fun SurchargeNavGraph(
             }
         ) {
             AnalyticsScreen(
-                data = appContainer.data,
+                app = appContainer,
                 onBack = { navController.popBackStack() }
             )
         }

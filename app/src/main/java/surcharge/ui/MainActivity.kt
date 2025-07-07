@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
                     when (result.errorCode) {
                         AuthorizeErrorCode.NO_NETWORK -> {}
                         AuthorizeErrorCode.USAGE_ERROR -> {}
+//                        AuthorizeErrorCode.UNSUPPORTED_COUNTRY -> {}
                     }
                 }
             }

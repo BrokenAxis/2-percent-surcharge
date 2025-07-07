@@ -18,7 +18,8 @@ fun handleCardCheckout(
     val paymentManager = MobilePaymentsSdk.paymentManager()
     val paymentParameters = PaymentParameters.Builder(
         amount = Money(total.toLong(), CurrencyCode.AUD),
-        idempotencyKey = UUID.randomUUID().toString() // todo store this
+        idempotencyKey = UUID.randomUUID().toString(), // todo store this
+//        processingMode = ProcessingMode.AUTO_DETECT
     )
         .referenceId(saleId)
         .build()
